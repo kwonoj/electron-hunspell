@@ -75,6 +75,7 @@
     "typescript": "^2.5.2"
   },
   "dependencies": {
+    "getroot": "^1.0.0",
     "hunspell-asm": "0.0.6",
     "tslib": "^1.7.1"
   }

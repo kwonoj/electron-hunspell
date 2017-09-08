@@ -31,7 +31,6 @@
   "coveragePathIgnorePatterns": [
     "<rootDir>/node_modules/",
     "<rootDir>/spec/.*\\.(ts|js)$",
-    "<rootDir>/build/.*\\.(ts|js)$",
-    "<rootDir>/src/util/root.ts"
+    "<rootDir>/build/.*\\.(ts|js)$"
   ]
 }
