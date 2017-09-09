@@ -1,1 +1,1 @@
-export {};
+export { SpellCheckerProvider } from './spellCheckerProvider';
