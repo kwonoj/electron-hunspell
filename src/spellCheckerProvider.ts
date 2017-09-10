@@ -1,16 +1,24 @@
-import { HunspellFactory, loadModule } from 'hunspell-asm';
+import { Hunspell, HunspellFactory, loadModule } from 'hunspell-asm';
+import sortBy = require('lodash.sortby'); //tslint:disable-line:no-var-requires no-require-imports
 import * as path from 'path';
 import * as unixify from 'unixify';
 
 const isArrayBuffer = (value: any) => value && value.buffer instanceof ArrayBuffer && value.byteLength !== undefined;
 
-interface SpellChecker {}
+interface SpellChecker {
+  affPath: string;
+  dicPath: string;
+  spellChecker: Hunspell;
+  uptime: number;
+}
 
 class SpellCheckerProvider {
   private hunspellFactory: HunspellFactory;
   private spellCheckerTable: { [x: string]: SpellChecker } = {};
 
-  private currentSpellcheckerKey: string;
+  private currentSpellCheckerKey: string | null = null;
+
+  private currentSpellCheckerStartTime: number | null = null;
 
   /**
    * Create provider instance of hunspell.
@@ -21,9 +29,7 @@ class SpellCheckerProvider {
    * If provider already loaded number of dictionary and asked to load additional one, least used dictionary will be unloaded.
    * 1 by default.
    */
-  constructor(private readonly maxDictionaryCount = 1) {
-    //noop
-  }
+  constructor(private readonly maxDictionaryCount = 1) {}
 
   public attach(): void {
     throw new Error('not implemented');
@@ -31,10 +37,16 @@ class SpellCheckerProvider {
 
   public switchDictionary(key: string): void {
     if (!this.spellCheckerTable[key]) {
-      throw new Error(`Spellchecker dictionary for ${key} is not available`);
+      throw new Error(`Spellchecker dictionary for ${key} is not available, ensure dictionary loaded`);
     }
 
-    this.currentSpellcheckerKey = key;
+    if (!!this.currentSpellCheckerStartTime) {
+      const upTime = Date.now() - this.currentSpellCheckerStartTime;
+      this.spellCheckerTable[this.currentSpellCheckerKey!].uptime += upTime;
+    }
+
+    this.currentSpellCheckerStartTime = Date.now();
+    this.currentSpellCheckerKey = key;
   }
 
   public async loadDictionary(key: string, dicBuffer: ArrayBufferView, affBuffer: ArrayBufferView): Promise<void>;
@@ -56,7 +68,7 @@ class SpellCheckerProvider {
     }
 
     const mounted = isBufferDictionary
-      ? this.mountBufferDictionary(key, dic as ArrayBufferView, aff as ArrayBufferView)
+      ? this.mountBufferDictionary(dic as ArrayBufferView, aff as ArrayBufferView)
       : this.mountFileDictionary(dic as string, aff as string);
 
     this.assignSpellchecker(key, mounted.mountedAffPath, mounted.mountedDicPath);
@@ -64,9 +76,24 @@ class SpellCheckerProvider {
 
   private invalidateLoadedDictionary(): void {
     const keys = Object.keys(this.spellCheckerTable);
-    if (keys.length >= this.maxDictionaryCount) {
-      throw new Error('not implemented');
-    }
+    const unloadCount = keys.length - this.maxDictionaryCount;
+
+    const dicts = sortBy(
+      keys.map(key => ({ key, value: this.spellCheckerTable[key] })),
+      checker => checker.value.uptime
+    ).slice(0, unloadCount);
+
+    dicts.forEach(dict => {
+      const { value, key } = dict;
+      value.spellChecker.dispose();
+      this.hunspellFactory.unmount(value.affPath);
+      this.hunspellFactory.unmount(value.dicPath);
+      delete this.spellCheckerTable[key];
+
+      if (this.currentSpellCheckerKey === key) {
+        this.currentSpellCheckerKey = null;
+      }
+    });
   }
 
   private async loadAsmModule(): Promise<void> {
@@ -77,11 +104,11 @@ class SpellCheckerProvider {
     this.hunspellFactory = await loadModule();
   }
 
-  private mountBufferDictionary(key: string, dicBuffer: ArrayBufferView, affBuffer: ArrayBufferView) {
+  private mountBufferDictionary(dicBuffer: ArrayBufferView, affBuffer: ArrayBufferView) {
     const factory = this.hunspellFactory;
 
-    const mountedAffPath = factory.mountBuffer(affBuffer, `${key}.aff`);
-    const mountedDicPath = factory.mountBuffer(dicBuffer, `${key}.dic`);
+    const mountedAffPath = factory.mountBuffer(affBuffer);
+    const mountedDicPath = factory.mountBuffer(dicBuffer);
 
     return {
       mountedAffPath,
@@ -116,8 +143,13 @@ class SpellCheckerProvider {
     this.spellCheckerTable[key] = {
       affPath,
       dicPath,
-      spellChecker: factory.create(affPath, dicPath)
+      spellChecker: factory.create(affPath, dicPath),
+      uptime: 0
     };
+
+    if (!!this.currentSpellCheckerKey) {
+      this.switchDictionary(key);
+    }
   }
 }
 
