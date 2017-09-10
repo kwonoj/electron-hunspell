@@ -1,3 +1,5 @@
+import { enableLogger as setHunspellLogger } from 'hunspell-asm';
+
 type logFunctionType = (message: string, ...optionalParams: Array<any>) => void;
 type logObjectType = {
   debug: logFunctionType;
@@ -31,6 +33,8 @@ function enableLogger(logger: logObjectType): void;
 function enableLogger(logger: logFunctionType | logObjectType) {
   const isLogFunction = typeof logger === 'function';
   Object.keys(log).forEach(key => (log[key] = isLogFunction ? logger : logger[key]));
+
+  setHunspellLogger(log.debug.bind(log));
 }
 
 export { logFunctionType, logObjectType, enableLogger, log };
