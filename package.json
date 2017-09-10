@@ -76,7 +76,8 @@
   },
   "dependencies": {
     "getroot": "^1.0.0",
-    "hunspell-asm": "0.0.7",
-    "tslib": "^1.7.1"
+    "hunspell-asm": "0.0.9",
+    "tslib": "^1.7.1",
+    "unixify": "^1.0.0"
   }
 }
