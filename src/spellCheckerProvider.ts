@@ -1,29 +1,38 @@
-import { HunspellFactory, loadModule } from 'hunspell-asm';
+import { Hunspell, HunspellFactory, loadModule } from 'hunspell-asm';
+import orderBy = require('lodash.orderby'); //tslint:disable-line:no-var-requires no-require-imports
 import * as path from 'path';
 import * as unixify from 'unixify';
 
 const isArrayBuffer = (value: any) => value && value.buffer instanceof ArrayBuffer && value.byteLength !== undefined;
 
-interface SpellChecker {}
+interface SpellChecker {
+  spellChecker: Hunspell;
+  uptime: number;
+  dispose: () => void;
+}
 
 class SpellCheckerProvider {
   private hunspellFactory: HunspellFactory;
   private spellCheckerTable: { [x: string]: SpellChecker } = {};
+  public get availableDictionaries(): Readonly<Array<string>> {
+    const array = Object.keys(this.spellCheckerTable).map(key => ({ key, uptime: this.spellCheckerTable[key].uptime }));
+    return orderBy(array, ['uptime'], ['desc']).map(v => v.key);
+  }
 
-  private currentSpellcheckerKey: string;
+  private _currentSpellCheckerKey: string | null = null;
+  public get selectedDictionary(): string | null {
+    return this._currentSpellCheckerKey;
+  }
 
   /**
-   * Create provider instance of hunspell.
-   * Provider manages general behavior of hunspell,
-   * such as loading dictionary instance, attaching spellchecker, and switching languages.
-   *
-   * @param {number} maxDictionaryCount number of dictionary provider can hold without unloading it.
-   * If provider already loaded number of dictionary and asked to load additional one, least used dictionary will be unloaded.
-   * 1 by default.
+   * Holds ref count of physical mount path to unmount only there isn't ref anymore.
+   * multiple aff / dic can be placed under single directory, which will create single directory mount point -
+   * unmonuting it immediately will makes other dictionary unavailable. Instead, counts ref and only unmount when
+   * last dictionary unmounted.
    */
-  constructor(private readonly maxDictionaryCount = 1) {
-    //noop
-  }
+  private fileMountRefCount = {};
+
+  private currentSpellCheckerStartTime: number | null = null;
 
   public attach(): void {
     throw new Error('not implemented');
@@ -31,10 +40,16 @@ class SpellCheckerProvider {
 
   public switchDictionary(key: string): void {
     if (!this.spellCheckerTable[key]) {
-      throw new Error(`Spellchecker dictionary for ${key} is not available`);
+      throw new Error(`Spellchecker dictionary for ${key} is not available, ensure dictionary loaded`);
     }
 
-    this.currentSpellcheckerKey = key;
+    if (!!this.currentSpellCheckerStartTime) {
+      const upTime = Date.now() - this.currentSpellCheckerStartTime;
+      this.spellCheckerTable[this._currentSpellCheckerKey!].uptime += upTime;
+    }
+
+    this.currentSpellCheckerStartTime = Date.now();
+    this._currentSpellCheckerKey = key;
   }
 
   public async loadDictionary(key: string, dicBuffer: ArrayBufferView, affBuffer: ArrayBufferView): Promise<void>;
@@ -46,8 +61,6 @@ class SpellCheckerProvider {
   ): Promise<void> {
     await this.loadAsmModule();
 
-    this.invalidateLoadedDictionary();
-
     const isBufferDictionary = isArrayBuffer(dic) && isArrayBuffer(aff);
     const isFileDictionary = typeof dic === 'string' && typeof aff === 'string';
 
@@ -56,17 +69,21 @@ class SpellCheckerProvider {
     }
 
     const mounted = isBufferDictionary
-      ? this.mountBufferDictionary(key, dic as ArrayBufferView, aff as ArrayBufferView)
+      ? this.mountBufferDictionary(dic as ArrayBufferView, aff as ArrayBufferView)
       : this.mountFileDictionary(dic as string, aff as string);
 
-    this.assignSpellchecker(key, mounted.mountedAffPath, mounted.mountedDicPath);
+    this.assignSpellchecker(key, mounted);
   }
 
-  private invalidateLoadedDictionary(): void {
-    const keys = Object.keys(this.spellCheckerTable);
-    if (keys.length >= this.maxDictionaryCount) {
-      throw new Error('not implemented');
+  public unloadDictionary(key: string): void {
+    if (!!this._currentSpellCheckerKey && this._currentSpellCheckerKey === key) {
+      this._currentSpellCheckerKey = null;
     }
+
+    const dict = this.spellCheckerTable[key];
+    dict.dispose();
+
+    delete this.spellCheckerTable[key];
   }
 
   private async loadAsmModule(): Promise<void> {
@@ -77,46 +94,83 @@ class SpellCheckerProvider {
     this.hunspellFactory = await loadModule();
   }
 
-  private mountBufferDictionary(key: string, dicBuffer: ArrayBufferView, affBuffer: ArrayBufferView) {
+  private mountBufferDictionary(dicBuffer: ArrayBufferView, affBuffer: ArrayBufferView) {
     const factory = this.hunspellFactory;
 
-    const mountedAffPath = factory.mountBuffer(affBuffer, `${key}.aff`);
-    const mountedDicPath = factory.mountBuffer(dicBuffer, `${key}.dic`);
-
     return {
-      mountedAffPath,
-      mountedDicPath
+      affPath: factory.mountBuffer(affBuffer),
+      dicPath: factory.mountBuffer(dicBuffer),
+      buffer: true
     };
   }
 
   private mountFileDictionary(dicFilePath: string, affFilePath: string) {
     const factory = this.hunspellFactory;
 
-    const affFilename = path.basename(affFilePath);
-    const affDir = path.dirname(affFilePath);
-
-    const dicFilename = path.basename(dicFilePath);
-    const dicDir = path.dirname(dicFilePath);
-
-    const mountedAffDir = factory.mountDirectory(affDir);
-    const mountedDicDir = factory.mountDirectory(dicDir);
-
-    const mountedAffPath = unixify(path.join(mountedAffDir, affFilename));
-    const mountedDicPath = unixify(path.join(mountedDicDir, dicFilename));
+    const getMountedPath = (filePath: string) => {
+      const mountedDir = factory.mountDirectory(path.dirname(filePath));
+      return unixify(path.join(mountedDir, path.basename(filePath)));
+    };
 
     return {
-      mountedAffPath,
-      mountedDicPath
+      affPath: getMountedPath(affFilePath),
+      dicPath: getMountedPath(dicFilePath),
+      buffer: false
     };
   }
 
-  private assignSpellchecker(key: string, affPath: string, dicPath: string) {
+  private assignSpellchecker(
+    key: string,
+    { buffer, affPath, dicPath }: { buffer: boolean; affPath: string; dicPath: string }
+  ) {
     const factory = this.hunspellFactory;
+    const spellChecker = factory.create(affPath, dicPath);
+
+    const increaseRefCount = (filePath: string) => {
+      const dir = path.basename(filePath);
+      this.fileMountRefCount[dir] = !!this.fileMountRefCount[dir] ? this.fileMountRefCount[dir] + 1 : 0;
+    };
+
+    const decreaseRefCount = (filePath: string) => {
+      const dir = path.basename(filePath);
+      if (this.fileMountRefCount[dir] > 0) {
+        this.fileMountRefCount[dir] -= 1;
+      }
+
+      if (this.fileMountRefCount[dir] === 0) {
+        delete this.fileMountRefCount[dir];
+      }
+      return !!this.fileMountRefCount[dir] ? this.fileMountRefCount[dir] : 0;
+    };
+
+    if (!buffer) {
+      increaseRefCount(affPath);
+      increaseRefCount(dicPath);
+    }
+
+    const unmountFile = () => {
+      const paths = [affPath, dicPath];
+      paths.forEach(p => {
+        const ref = decreaseRefCount(p);
+        if (ref === 0) {
+          factory.unmount(p);
+        }
+      });
+
+      spellChecker.dispose();
+    };
+
+    const unmountBuffer = () => {
+      factory.unmount(affPath);
+      factory.unmount(dicPath);
+
+      spellChecker.dispose();
+    };
 
     this.spellCheckerTable[key] = {
-      affPath,
-      dicPath,
-      spellChecker: factory.create(affPath, dicPath)
+      uptime: 0,
+      spellChecker,
+      dispose: buffer ? unmountBuffer : unmountFile
     };
   }
 }
