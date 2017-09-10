@@ -107,33 +107,23 @@ class SpellCheckerProvider {
   private mountBufferDictionary(dicBuffer: ArrayBufferView, affBuffer: ArrayBufferView) {
     const factory = this.hunspellFactory;
 
-    const mountedAffPath = factory.mountBuffer(affBuffer);
-    const mountedDicPath = factory.mountBuffer(dicBuffer);
-
     return {
-      mountedAffPath,
-      mountedDicPath
+      mountedAffPath: factory.mountBuffer(affBuffer),
+      mountedDicPath: factory.mountBuffer(dicBuffer)
     };
   }
 
   private mountFileDictionary(dicFilePath: string, affFilePath: string) {
     const factory = this.hunspellFactory;
 
-    const affFilename = path.basename(affFilePath);
-    const affDir = path.dirname(affFilePath);
-
-    const dicFilename = path.basename(dicFilePath);
-    const dicDir = path.dirname(dicFilePath);
-
-    const mountedAffDir = factory.mountDirectory(affDir);
-    const mountedDicDir = factory.mountDirectory(dicDir);
-
-    const mountedAffPath = unixify(path.join(mountedAffDir, affFilename));
-    const mountedDicPath = unixify(path.join(mountedDicDir, dicFilename));
+    const getMountedPath = (filePath: string) => {
+      const mountedDir = factory.mountDirectory(path.dirname(filePath));
+      return unixify(path.join(mountedDir, path.basename(filePath)));
+    };
 
     return {
-      mountedAffPath,
-      mountedDicPath
+      mountedAffPath: getMountedPath(affFilePath),
+      mountedDicPath: getMountedPath(dicFilePath)
     };
   }
 
