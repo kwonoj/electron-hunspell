@@ -2,9 +2,18 @@ import { Hunspell, HunspellFactory, loadModule } from 'hunspell-asm';
 import orderBy = require('lodash.orderby'); //tslint:disable-line:no-var-requires no-require-imports
 import * as path from 'path';
 import * as unixify from 'unixify';
+import { log } from './util/logger';
 
+/**
+ * Check if given object is ArrayBufferView.
+ * @param {any} value object to check.
+ */
 const isArrayBuffer = (value: any) => value && value.buffer instanceof ArrayBuffer && value.byteLength !== undefined;
 
+/**
+ * @internal
+ * Spell checker instance corresponds to each loaded dictionary.
+ */
 interface SpellChecker {
   spellChecker: Hunspell;
   uptime: number;
@@ -14,12 +23,19 @@ interface SpellChecker {
 class SpellCheckerProvider {
   private hunspellFactory: HunspellFactory;
   private spellCheckerTable: { [x: string]: SpellChecker } = {};
+  /**
+   * Returns array of dictionary keys currently loaded.
+   * Array is sorted by usage time of dictionary by descending order.
+   */
   public get availableDictionaries(): Readonly<Array<string>> {
     const array = Object.keys(this.spellCheckerTable).map(key => ({ key, uptime: this.spellCheckerTable[key].uptime }));
     return orderBy(array, ['uptime'], ['desc']).map(v => v.key);
   }
 
   private _currentSpellCheckerKey: string | null = null;
+  /**
+   * Returns currently selected dictionary key.
+   */
   public get selectedDictionary(): string | null {
     return this._currentSpellCheckerKey;
   }
@@ -43,9 +59,18 @@ class SpellCheckerProvider {
       throw new Error(`Spellchecker dictionary for ${key} is not available, ensure dictionary loaded`);
     }
 
+    log.info(
+      `switchDictionary: switching dictionary to check spell from '${this._currentSpellCheckerKey}' to '${key}'`
+    );
+
     if (!!this.currentSpellCheckerStartTime) {
       const upTime = Date.now() - this.currentSpellCheckerStartTime;
       this.spellCheckerTable[this._currentSpellCheckerKey!].uptime += upTime;
+      log.info(
+        `switchDictionary: total uptime for '${this._currentSpellCheckerKey}' '${this.spellCheckerTable[
+          this._currentSpellCheckerKey!
+        ].uptime}'`
+      );
     }
 
     this.currentSpellCheckerStartTime = Date.now();
@@ -91,7 +116,9 @@ class SpellCheckerProvider {
       return;
     }
 
+    log.info(`loadAsmModule: loading hunspell-asm module`);
     this.hunspellFactory = await loadModule();
+    log.info(`loadAsmModule: asm module loaded successfully`);
   }
 
   private mountBufferDictionary(dicBuffer: ArrayBufferView, affBuffer: ArrayBufferView) {
@@ -129,6 +156,8 @@ class SpellCheckerProvider {
     const increaseRefCount = (filePath: string) => {
       const dir = path.basename(filePath);
       this.fileMountRefCount[dir] = !!this.fileMountRefCount[dir] ? this.fileMountRefCount[dir] + 1 : 0;
+
+      log.debug(`increaseRefCount: refCount set for '${dir}' to '${this.fileMountRefCount[dir]}'`);
     };
 
     const decreaseRefCount = (filePath: string) => {
@@ -140,7 +169,11 @@ class SpellCheckerProvider {
       if (this.fileMountRefCount[dir] === 0) {
         delete this.fileMountRefCount[dir];
       }
-      return !!this.fileMountRefCount[dir] ? this.fileMountRefCount[dir] : 0;
+
+      const refCount = !!this.fileMountRefCount[dir] ? this.fileMountRefCount[dir] : 0;
+
+      log.debug(`decreaseRefCount: refCount set for '${dir}' to '${refCount}'`);
+      return refCount;
     };
 
     if (!buffer) {
@@ -163,8 +196,10 @@ class SpellCheckerProvider {
     const unmountBuffer = () => {
       factory.unmount(affPath);
       factory.unmount(dicPath);
+      log.debug(`unmountBuffer: unmounted buffer `, affPath, dicPath);
 
       spellChecker.dispose();
+      log.debug(`unmountBuffer: disposed hunspell instance for `, key);
     };
 
     this.spellCheckerTable[key] = {
@@ -172,6 +207,8 @@ class SpellCheckerProvider {
       spellChecker,
       dispose: buffer ? unmountBuffer : unmountFile
     };
+
+    log.info(`assignSpellchecker: spellCheckerTable added new checker for '${key}'`);
   }
 }
 
