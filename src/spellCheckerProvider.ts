@@ -1,3 +1,4 @@
+import ElectronType = require('electron'); //tslint:disable-line:no-var-requires no-require-imports
 import { Hunspell, HunspellFactory, loadModule } from 'hunspell-asm';
 import orderBy = require('lodash.orderby'); //tslint:disable-line:no-var-requires no-require-imports
 import * as path from 'path';
@@ -51,7 +52,28 @@ class SpellCheckerProvider {
   private currentSpellCheckerStartTime: number | null = null;
 
   public attach(): void {
-    throw new Error('not implemented');
+    if (!this._currentSpellCheckerKey) {
+      log.warn(`attach: Spellchecker langauge key is not set, do not lookup provider instance`);
+      return;
+    }
+
+    const checker = this.spellCheckerTable[this._currentSpellCheckerKey];
+    if (!checker) {
+      log.error(`attach: There isn't corresponding dictionary for key '${this._currentSpellCheckerKey}'`);
+      return;
+    }
+
+    const webFrame: typeof ElectronType.webFrame | null =
+      process.type === 'renderer' ? require('electron').webFrame : null; //tslint:disable-line:no-var-requires no-require-imports
+
+    if (!webFrame) {
+      log.warn(`attach: Cannot lookup webFrame to set spell checker provider`);
+      return;
+    }
+
+    webFrame.setSpellCheckProvider(this._currentSpellCheckerKey, true, {
+      spellCheck: text => checker.spellChecker.spell(text)
+    });
   }
 
   public switchDictionary(key: string): void {
