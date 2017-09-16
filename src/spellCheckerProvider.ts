@@ -1,3 +1,4 @@
+import ElectronType = require('electron'); //tslint:disable-line:no-var-requires no-require-imports
 import { Hunspell, HunspellFactory, loadModule } from 'hunspell-asm';
 import orderBy = require('lodash.orderby'); //tslint:disable-line:no-var-requires no-require-imports
 import * as path from 'path';
@@ -50,10 +51,6 @@ class SpellCheckerProvider {
 
   private currentSpellCheckerStartTime: number | null = null;
 
-  public attach(): void {
-    throw new Error('not implemented');
-  }
-
   public switchDictionary(key: string): void {
     if (!this.spellCheckerTable[key]) {
       throw new Error(`Spellchecker dictionary for ${key} is not available, ensure dictionary loaded`);
@@ -65,16 +62,16 @@ class SpellCheckerProvider {
 
     if (!!this.currentSpellCheckerStartTime) {
       const upTime = Date.now() - this.currentSpellCheckerStartTime;
-      this.spellCheckerTable[this._currentSpellCheckerKey!].uptime += upTime;
-      log.info(
-        `switchDictionary: total uptime for '${this._currentSpellCheckerKey}' '${this.spellCheckerTable[
-          this._currentSpellCheckerKey!
-        ].uptime}'`
-      );
+      const currentKey = this._currentSpellCheckerKey;
+      if (!!currentKey) {
+        this.spellCheckerTable[currentKey].uptime += upTime;
+        log.info(`switchDictionary: total uptime for '${currentKey}' '${this.spellCheckerTable[currentKey].uptime}'`);
+      }
     }
 
     this.currentSpellCheckerStartTime = Date.now();
     this._currentSpellCheckerKey = key;
+    this.attach(key);
   }
 
   public async loadDictionary(key: string, dicBuffer: ArrayBufferView, affBuffer: ArrayBufferView): Promise<void>;
@@ -103,12 +100,42 @@ class SpellCheckerProvider {
   public unloadDictionary(key: string): void {
     if (!!this._currentSpellCheckerKey && this._currentSpellCheckerKey === key) {
       this._currentSpellCheckerKey = null;
+
+      log.warn(`unloadDictionary: unload dictionary for current spellchecker instance`);
+      this.setProvider(key, () => true);
     }
 
     const dict = this.spellCheckerTable[key];
     dict.dispose();
 
     delete this.spellCheckerTable[key];
+  }
+
+  private attach(key: string): void {
+    if (!key) {
+      log.warn(`attach: Spellchecker langauge key is not set, will not lookup provider instance`);
+      return;
+    }
+
+    const checker = this.spellCheckerTable[key];
+    if (!checker) {
+      log.error(`attach: There isn't corresponding dictionary for key '${key}'`);
+      return;
+    }
+
+    this.setProvider(key, checker.spellChecker.spell);
+  }
+
+  private setProvider(key: string, provider: (text: string) => boolean): void {
+    const webFrame: typeof ElectronType.webFrame | null =
+      process.type === 'renderer' ? require('electron').webFrame : null; //tslint:disable-line:no-var-requires no-require-imports
+
+    if (!webFrame) {
+      log.warn(`attach: Cannot lookup webFrame to set spell checker provider`);
+      return;
+    }
+
+    webFrame.setSpellCheckProvider(key, true, { spellCheck: provider });
   }
 
   private async loadAsmModule(): Promise<void> {
@@ -155,7 +182,7 @@ class SpellCheckerProvider {
 
     const increaseRefCount = (filePath: string) => {
       const dir = path.basename(filePath);
-      this.fileMountRefCount[dir] = !!this.fileMountRefCount[dir] ? this.fileMountRefCount[dir] + 1 : 0;
+      this.fileMountRefCount[dir] = !!this.fileMountRefCount[dir] ? this.fileMountRefCount[dir] + 1 : 1;
 
       log.debug(`increaseRefCount: refCount set for '${dir}' to '${this.fileMountRefCount[dir]}'`);
     };

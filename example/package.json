@@ -4,11 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "shx rm -rf ./dist && tsc && shx cp ko.aff ko.dic index.html ./dist/example && electron ./dist/example/main.js"
   },
   "author": "OJ Kwon <kwon.ohjoong@gmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^1.7.6"
-  }
+    "electron": "^1.7.6",
+    "shx": "^0.2.2",
+    "typescript": "^2.5.2"
+  },
+  "dependencies": {}
 }
