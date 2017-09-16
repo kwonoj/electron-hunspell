@@ -182,7 +182,7 @@ class SpellCheckerProvider {
 
     const increaseRefCount = (filePath: string) => {
       const dir = path.basename(filePath);
-      this.fileMountRefCount[dir] = !!this.fileMountRefCount[dir] ? this.fileMountRefCount[dir] + 1 : 0;
+      this.fileMountRefCount[dir] = !!this.fileMountRefCount[dir] ? this.fileMountRefCount[dir] + 1 : 1;
 
       log.debug(`increaseRefCount: refCount set for '${dir}' to '${this.fileMountRefCount[dir]}'`);
     };
