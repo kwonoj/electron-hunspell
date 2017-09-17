@@ -1,15 +1,9 @@
 import ElectronType = require('electron'); //tslint:disable-line:no-var-requires no-require-imports
 import { Hunspell, HunspellFactory, loadModule } from 'hunspell-asm';
-import orderBy = require('lodash.orderby'); //tslint:disable-line:no-var-requires no-require-imports
+import { isArrayBuffer, orderBy } from 'lodash';
 import * as path from 'path';
 import * as unixify from 'unixify';
 import { log } from './util/logger';
-
-/**
- * Check if given object is ArrayBufferView.
- * @param {any} value object to check.
- */
-const isArrayBuffer = (value: any) => value && value.buffer instanceof ArrayBuffer && value.byteLength !== undefined;
 
 /**
  * @internal
@@ -72,6 +66,21 @@ class SpellCheckerProvider {
     this.currentSpellCheckerStartTime = Date.now();
     this._currentSpellCheckerKey = key;
     this.attach(key);
+  }
+
+  public getSuggestion(text: string): Readonly<Array<string>> {
+    if (!this._currentSpellCheckerKey) {
+      log.warn(`getSuggestedWord: there isn't any spellchecker key, bailing`);
+      return [];
+    }
+
+    const checker = this.spellCheckerTable[this._currentSpellCheckerKey];
+    if (!checker) {
+      log.error(`attach: There isn't corresponding dictionary for key '${this._currentSpellCheckerKey}'`);
+      return [];
+    }
+
+    return checker.spellChecker.suggest(text);
   }
 
   public async loadDictionary(key: string, dicBuffer: ArrayBufferView, affBuffer: ArrayBufferView): Promise<void>;

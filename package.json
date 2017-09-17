@@ -56,7 +56,6 @@
     "@types/chai": "^4.0.3",
     "@types/jest": "^20.0.8",
     "@types/lodash": "^4.14.74",
-    "@types/lodash.orderby": "^4.6.3",
     "@types/node": "^8.0.25",
     "chai": "^4.1.1",
     "commitizen": "2.9.6",
@@ -79,7 +78,6 @@
   "dependencies": {
     "getroot": "^1.0.0",
     "hunspell-asm": "0.0.13",
-    "lodash.orderby": "^4.6.0",
     "tslib": "^1.7.1",
     "unixify": "^1.0.0"
   }
