@@ -29,8 +29,8 @@
   },
   "files": [
     "main.ts",
-    "index.ts",
-    "preload.ts",
+    "browserWindow.ts",
+    "browserView-preload.ts",
     "../src/ambient.d.ts"
   ]
 }
