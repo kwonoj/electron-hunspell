@@ -53,6 +53,22 @@ describe('logger', () => {
     });
   });
 
+  it('should accept partial log object', () => {
+    const mockLogger = {
+      info: jest.fn()
+    };
+
+    enableLogger(mockLogger);
+
+    const message = 'message';
+    const value = { value: 'value' };
+
+    log.info(message, value);
+    expect(() => log.debug('boo')).to.not.throw();
+    expect(mockLogger.info.mock.calls).to.have.lengthOf(1);
+    expect(mockLogger.info.mock.calls[0]).to.deep.equal([message, value]);
+  });
+
   it('should set function to hunspell logger', () => {
     const hunspellEnableLogger = require('hunspell-asm').enableLogger;
 
