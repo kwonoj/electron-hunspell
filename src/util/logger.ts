@@ -29,10 +29,18 @@ const log: Readonly<logObjectType> = {
  * If logger object is provided, it should have all loglevel function.
  */
 function enableLogger(logger: logFunctionType): void;
-function enableLogger(logger: logObjectType): void;
-function enableLogger(logger: logFunctionType | logObjectType) {
+function enableLogger(logger: Partial<logObjectType>): void;
+function enableLogger(logger: logFunctionType | Partial<logObjectType>) {
   const isLogFunction = typeof logger === 'function';
-  Object.keys(log).forEach(key => (log[key] = isLogFunction ? logger : logger[key]));
+  Object.keys(log).forEach(
+    key =>
+      (log[key] = isLogFunction
+        ? logger
+        : logger[key] ||
+          (() => {
+            /*noop*/
+          }))
+  );
 
   setHunspellLogger(log.debug.bind(log));
 }

@@ -1,6 +1,6 @@
 import ElectronType = require('electron'); //tslint:disable-line:no-var-requires no-require-imports
 import { Hunspell, HunspellFactory, loadModule } from 'hunspell-asm';
-import { isArrayBuffer, orderBy } from 'lodash';
+import { orderBy } from 'lodash';
 import * as path from 'path';
 import * as unixify from 'unixify';
 import { log } from './util/logger';
@@ -15,6 +15,9 @@ interface SpellChecker {
   dispose: () => void;
 }
 
+/**
+ * Provides interface to manage spell checker and corresponding dictionaries, as well as attaching into electron's webFrame.
+ */
 class SpellCheckerProvider {
   private hunspellFactory: HunspellFactory;
   private spellCheckerTable: { [x: string]: SpellChecker } = {};
@@ -35,6 +38,14 @@ class SpellCheckerProvider {
     return this._currentSpellCheckerKey;
   }
 
+  private _verboseLog: boolean = false;
+  /**
+   * Allow to emit more verbose log.
+   */
+  public set verboseLog(value: boolean) {
+    this._verboseLog = value;
+  }
+
   /**
    * Holds ref count of physical mount path to unmount only there isn't ref anymore.
    * multiple aff / dic can be placed under single directory, which will create single directory mount point -
@@ -43,10 +54,14 @@ class SpellCheckerProvider {
    */
   private fileMountRefCount = {};
 
-  private currentSpellCheckerStartTime: number | null = null;
+  private currentSpellCheckerStartTime: number = Number.NEGATIVE_INFINITY;
 
+  /**
+   * Set current spell checker instance for given locale key then attach into current webFrame.
+   * @param {string} key Locale key for spell checker instance.
+   */
   public switchDictionary(key: string): void {
-    if (!this.spellCheckerTable[key]) {
+    if (!key || !this.spellCheckerTable[key]) {
       throw new Error(`Spellchecker dictionary for ${key} is not available, ensure dictionary loaded`);
     }
 
@@ -54,12 +69,12 @@ class SpellCheckerProvider {
       `switchDictionary: switching dictionary to check spell from '${this._currentSpellCheckerKey}' to '${key}'`
     );
 
-    if (!!this.currentSpellCheckerStartTime) {
-      const upTime = Date.now() - this.currentSpellCheckerStartTime;
+    if (Number.isInteger(this.currentSpellCheckerStartTime)) {
+      const timePassed = Date.now() - this.currentSpellCheckerStartTime;
       const currentKey = this._currentSpellCheckerKey;
       if (!!currentKey) {
-        this.spellCheckerTable[currentKey].uptime += upTime;
-        log.info(`switchDictionary: total uptime for '${currentKey}' '${this.spellCheckerTable[currentKey].uptime}'`);
+        this.spellCheckerTable[currentKey].uptime += timePassed;
+        log.info(`switchDictionary: total uptime for '${currentKey}' - '${this.spellCheckerTable[currentKey].uptime}'`);
       }
     }
 
@@ -68,6 +83,11 @@ class SpellCheckerProvider {
     this.attach(key);
   }
 
+  /**
+   * Get suggestion for misspelled text.
+   * @param {string} Text text to get suggstion.
+   * @returns {Readonly<Array<string>>} Array of suggested values.
+   */
   public getSuggestion(text: string): Readonly<Array<string>> {
     if (!this._currentSpellCheckerKey) {
       log.warn(`getSuggestedWord: there isn't any spellchecker key, bailing`);
@@ -80,19 +100,34 @@ class SpellCheckerProvider {
       return [];
     }
 
-    return checker.spellChecker.suggest(text);
+    const ret = checker.spellChecker.suggest(text);
+    if (this._verboseLog) {
+      log.debug(`getSuggestion: '${text}' got suggestions`, ret);
+    }
+    return ret;
   }
 
-  public async loadDictionary(key: string, dicBuffer: ArrayBufferView, affBuffer: ArrayBufferView): Promise<void>;
+  /**
+   * Load specified dictionary into memory, creates hunspell instance for corresponding locale key.
+   * @param {string} key Locale key for spell checker instance.
+   * @param {string | ArrayBufferView} dicPath Path to physical dictionary, or ArrayBufferView content.
+   * @param {string | ArrayBufferView} affPath Path to physical affix, or ArrayBufferView content.
+   * @returns {Promise<void>} Indication to load completes.
+   */
   public async loadDictionary(key: string, dicPath: string, affPath: string): Promise<void>;
+  public async loadDictionary(key: string, dicBuffer: ArrayBufferView, affBuffer: ArrayBufferView): Promise<void>;
   public async loadDictionary(
     key: string,
     dic: string | ArrayBufferView,
     aff: string | ArrayBufferView
   ): Promise<void> {
+    if (!key || !!this.spellCheckerTable[key]) {
+      throw new Error(`Invalid key: ${!!key ? 'already registered key' : 'key is empty'}`);
+    }
+
     await this.loadAsmModule();
 
-    const isBufferDictionary = isArrayBuffer(dic) && isArrayBuffer(aff);
+    const isBufferDictionary = ArrayBuffer.isView(dic) && ArrayBuffer.isView(aff);
     const isFileDictionary = typeof dic === 'string' && typeof aff === 'string';
 
     if (!isBufferDictionary && !isFileDictionary) {
@@ -106,9 +141,19 @@ class SpellCheckerProvider {
     this.assignSpellchecker(key, mounted);
   }
 
+  /**
+   * Dispose given spell checker instance and unload dictionary from memory.
+   * @param {string} key Locale key for spell checker instance.
+   */
   public unloadDictionary(key: string): void {
+    if (!key || !this.spellCheckerTable[key]) {
+      log.info(`unloadDictionary: not able to find corresponding spellchecker for given key`);
+      return;
+    }
+
     if (!!this._currentSpellCheckerKey && this._currentSpellCheckerKey === key) {
       this._currentSpellCheckerKey = null;
+      this.currentSpellCheckerStartTime = Number.NEGATIVE_INFINITY;
 
       log.warn(`unloadDictionary: unload dictionary for current spellchecker instance`);
       this.setProvider(key, () => true);
@@ -118,21 +163,20 @@ class SpellCheckerProvider {
     dict.dispose();
 
     delete this.spellCheckerTable[key];
+    log.info(`unloadDictionary: dictionary for '${key}' is unloaded`);
   }
 
   private attach(key: string): void {
-    if (!key) {
-      log.warn(`attach: Spellchecker langauge key is not set, will not lookup provider instance`);
-      return;
-    }
-
     const checker = this.spellCheckerTable[key];
-    if (!checker) {
-      log.error(`attach: There isn't corresponding dictionary for key '${key}'`);
-      return;
-    }
 
-    this.setProvider(key, checker.spellChecker.spell);
+    const provider = (text: string) => {
+      const ret = checker.spellChecker.spell(text);
+      if (this._verboseLog) {
+        log.debug(`spellChecker: checking spell for '${text}' with '${key}' returned`, ret);
+      }
+      return ret;
+    };
+    this.setProvider(key, provider);
   }
 
   private setProvider(key: string, provider: (text: string) => boolean): void {
@@ -190,14 +234,14 @@ class SpellCheckerProvider {
     const spellChecker = factory.create(affPath, dicPath);
 
     const increaseRefCount = (filePath: string) => {
-      const dir = path.basename(filePath);
+      const dir = path.dirname(filePath);
       this.fileMountRefCount[dir] = !!this.fileMountRefCount[dir] ? this.fileMountRefCount[dir] + 1 : 1;
 
       log.debug(`increaseRefCount: refCount set for '${dir}' to '${this.fileMountRefCount[dir]}'`);
     };
 
     const decreaseRefCount = (filePath: string) => {
-      const dir = path.basename(filePath);
+      const dir = path.dirname(filePath);
       if (this.fileMountRefCount[dir] > 0) {
         this.fileMountRefCount[dir] -= 1;
       }
@@ -222,7 +266,7 @@ class SpellCheckerProvider {
       paths.forEach(p => {
         const ref = decreaseRefCount(p);
         if (ref === 0) {
-          factory.unmount(p);
+          factory.unmount(path.dirname(p));
         }
       });
 

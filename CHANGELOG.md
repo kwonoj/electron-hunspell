@@ -1,3 +1,27 @@
+<a name="0.0.2"></a>
+## [0.0.2](https://github.com/kwonoj/electron-hunspell/compare/v0.0.1...v0.0.2) (2017-09-24)
+
+
+### Bug Fixes
+
+* **increaserefcount:** start refcount from 1 ([fd0e755](https://github.com/kwonoj/electron-hunspell/commit/fd0e755))
+
+
+### Features
+
+* **enablelogger:** propagate hunspell logger ([14be558](https://github.com/kwonoj/electron-hunspell/commit/14be558))
+* **getsuggestion:** implement getsuggestion ([b78bc1d](https://github.com/kwonoj/electron-hunspell/commit/b78bc1d))
+* **index:** export logger ([aad3f25](https://github.com/kwonoj/electron-hunspell/commit/aad3f25))
+* **loaddictionary:** unload current dictionary ([a8c27b6](https://github.com/kwonoj/electron-hunspell/commit/a8c27b6))
+* **logger:** allow partial logger ([ce5529e](https://github.com/kwonoj/electron-hunspell/commit/ce5529e))
+* **logger:** implement logger ([bb24dc2](https://github.com/kwonoj/electron-hunspell/commit/bb24dc2))
+* **spellcheckerprovider:** implement spellcheckerprovider ([d72eda8](https://github.com/kwonoj/electron-hunspell/commit/d72eda8))
+* **spellcheckerprovider:** implements attach to webframe ([2910016](https://github.com/kwonoj/electron-hunspell/commit/2910016))
+* **spellcheckerprovider:** initial mounting logic ([3208fcf](https://github.com/kwonoj/electron-hunspell/commit/3208fcf))
+* **spellcheckerprovider:** switchDictionary now attaches provider ([ca95630](https://github.com/kwonoj/electron-hunspell/commit/ca95630))
+
+
+
 <a name="0.0.1"></a>
 ## 0.0.1 (2017-09-08)
 
