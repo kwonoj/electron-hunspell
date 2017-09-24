@@ -15,6 +15,9 @@ interface SpellChecker {
   dispose: () => void;
 }
 
+/**
+ * Provides interface to manage spell checker and corresponding dictionaries, as well as attaching into electron's webFrame.
+ */
 class SpellCheckerProvider {
   private hunspellFactory: HunspellFactory;
   private spellCheckerTable: { [x: string]: SpellChecker } = {};
@@ -36,6 +39,9 @@ class SpellCheckerProvider {
   }
 
   private _verboseLog: boolean = false;
+  /**
+   * Allow to emit more verbose log.
+   */
   public set verboseLog(value: boolean) {
     this._verboseLog = value;
   }
@@ -50,6 +56,10 @@ class SpellCheckerProvider {
 
   private currentSpellCheckerStartTime: number = Number.NEGATIVE_INFINITY;
 
+  /**
+   * Set current spell checker instance for given locale key then attach into current webFrame.
+   * @param {string} key Locale key for spell checker instance.
+   */
   public switchDictionary(key: string): void {
     if (!key || !this.spellCheckerTable[key]) {
       throw new Error(`Spellchecker dictionary for ${key} is not available, ensure dictionary loaded`);
@@ -73,6 +83,11 @@ class SpellCheckerProvider {
     this.attach(key);
   }
 
+  /**
+   * Get suggestion for misspelled text.
+   * @param {string} Text text to get suggstion.
+   * @returns {Readonly<Array<string>>} Array of suggested values.
+   */
   public getSuggestion(text: string): Readonly<Array<string>> {
     if (!this._currentSpellCheckerKey) {
       log.warn(`getSuggestedWord: there isn't any spellchecker key, bailing`);
@@ -92,6 +107,13 @@ class SpellCheckerProvider {
     return ret;
   }
 
+  /**
+   * Load specified dictionary into memory, creates hunspell instance for corresponding locale key.
+   * @param {string} key Locale key for spell checker instance.
+   * @param {string | ArrayBufferView} dicPath Path to physical dictionary, or ArrayBufferView content.
+   * @param {string | ArrayBufferView} affPath Path to physical affix, or ArrayBufferView content.
+   * @returns {Promise<void>} Indication to load completes.
+   */
   public async loadDictionary(key: string, dicPath: string, affPath: string): Promise<void>;
   public async loadDictionary(key: string, dicBuffer: ArrayBufferView, affBuffer: ArrayBufferView): Promise<void>;
   public async loadDictionary(
@@ -119,6 +141,10 @@ class SpellCheckerProvider {
     this.assignSpellchecker(key, mounted);
   }
 
+  /**
+   * Dispose given spell checker instance and unload dictionary from memory.
+   * @param {string} key Locale key for spell checker instance.
+   */
   public unloadDictionary(key: string): void {
     if (!key || !this.spellCheckerTable[key]) {
       log.info(`unloadDictionary: not able to find corresponding spellchecker for given key`);
