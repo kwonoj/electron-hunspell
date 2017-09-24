@@ -3,6 +3,8 @@ import * as idx from '../src/index';
 
 describe('index', () => {
   it('should export', () => {
-    expect(idx).to.exist;
+    const { enableLogger, SpellCheckerProvider } = idx;
+    expect(enableLogger).to.exist;
+    expect(SpellCheckerProvider).to.exist;
   });
 });
