@@ -1,6 +1,6 @@
 import ElectronType = require('electron'); //tslint:disable-line:no-var-requires no-require-imports
 import { Hunspell, HunspellFactory, loadModule } from 'hunspell-asm';
-import { isArrayBuffer, orderBy } from 'lodash';
+import { orderBy } from 'lodash';
 import * as path from 'path';
 import * as unixify from 'unixify';
 import { log } from './util/logger';
@@ -35,6 +35,11 @@ class SpellCheckerProvider {
     return this._currentSpellCheckerKey;
   }
 
+  private _verboseLog: boolean = false;
+  public set verboseLog(value: boolean) {
+    this._verboseLog = value;
+  }
+
   /**
    * Holds ref count of physical mount path to unmount only there isn't ref anymore.
    * multiple aff / dic can be placed under single directory, which will create single directory mount point -
@@ -43,10 +48,10 @@ class SpellCheckerProvider {
    */
   private fileMountRefCount = {};
 
-  private currentSpellCheckerStartTime: number | null = null;
+  private currentSpellCheckerStartTime: number = Number.NEGATIVE_INFINITY;
 
   public switchDictionary(key: string): void {
-    if (!this.spellCheckerTable[key]) {
+    if (!key || !this.spellCheckerTable[key]) {
       throw new Error(`Spellchecker dictionary for ${key} is not available, ensure dictionary loaded`);
     }
 
@@ -54,12 +59,12 @@ class SpellCheckerProvider {
       `switchDictionary: switching dictionary to check spell from '${this._currentSpellCheckerKey}' to '${key}'`
     );
 
-    if (!!this.currentSpellCheckerStartTime) {
-      const upTime = Date.now() - this.currentSpellCheckerStartTime;
+    if (Number.isInteger(this.currentSpellCheckerStartTime)) {
+      const timePassed = Date.now() - this.currentSpellCheckerStartTime;
       const currentKey = this._currentSpellCheckerKey;
       if (!!currentKey) {
-        this.spellCheckerTable[currentKey].uptime += upTime;
-        log.info(`switchDictionary: total uptime for '${currentKey}' '${this.spellCheckerTable[currentKey].uptime}'`);
+        this.spellCheckerTable[currentKey].uptime += timePassed;
+        log.info(`switchDictionary: total uptime for '${currentKey}' - '${this.spellCheckerTable[currentKey].uptime}'`);
       }
     }
 
@@ -80,19 +85,27 @@ class SpellCheckerProvider {
       return [];
     }
 
-    return checker.spellChecker.suggest(text);
+    const ret = checker.spellChecker.suggest(text);
+    if (this._verboseLog) {
+      log.debug(`getSuggestion: '${text}' got suggestions`, ret);
+    }
+    return ret;
   }
 
-  public async loadDictionary(key: string, dicBuffer: ArrayBufferView, affBuffer: ArrayBufferView): Promise<void>;
   public async loadDictionary(key: string, dicPath: string, affPath: string): Promise<void>;
+  public async loadDictionary(key: string, dicBuffer: ArrayBufferView, affBuffer: ArrayBufferView): Promise<void>;
   public async loadDictionary(
     key: string,
     dic: string | ArrayBufferView,
     aff: string | ArrayBufferView
   ): Promise<void> {
+    if (!key || !!this.spellCheckerTable[key]) {
+      throw new Error(`Invalid key: ${!!key ? 'already registered key' : 'key is empty'}`);
+    }
+
     await this.loadAsmModule();
 
-    const isBufferDictionary = isArrayBuffer(dic) && isArrayBuffer(aff);
+    const isBufferDictionary = ArrayBuffer.isView(dic) && ArrayBuffer.isView(aff);
     const isFileDictionary = typeof dic === 'string' && typeof aff === 'string';
 
     if (!isBufferDictionary && !isFileDictionary) {
@@ -107,8 +120,14 @@ class SpellCheckerProvider {
   }
 
   public unloadDictionary(key: string): void {
+    if (!key || !this.spellCheckerTable[key]) {
+      log.info(`unloadDictionary: not able to find corresponding spellchecker for given key`);
+      return;
+    }
+
     if (!!this._currentSpellCheckerKey && this._currentSpellCheckerKey === key) {
       this._currentSpellCheckerKey = null;
+      this.currentSpellCheckerStartTime = Number.NEGATIVE_INFINITY;
 
       log.warn(`unloadDictionary: unload dictionary for current spellchecker instance`);
       this.setProvider(key, () => true);
@@ -118,21 +137,20 @@ class SpellCheckerProvider {
     dict.dispose();
 
     delete this.spellCheckerTable[key];
+    log.info(`unloadDictionary: dictionary for '${key}' is unloaded`);
   }
 
   private attach(key: string): void {
-    if (!key) {
-      log.warn(`attach: Spellchecker langauge key is not set, will not lookup provider instance`);
-      return;
-    }
-
     const checker = this.spellCheckerTable[key];
-    if (!checker) {
-      log.error(`attach: There isn't corresponding dictionary for key '${key}'`);
-      return;
-    }
 
-    this.setProvider(key, checker.spellChecker.spell);
+    const provider = (text: string) => {
+      const ret = checker.spellChecker.spell(text);
+      if (this._verboseLog) {
+        log.debug(`spellChecker: checking spell for '${text}' with '${key}' returned`, ret);
+      }
+      return ret;
+    };
+    this.setProvider(key, provider);
   }
 
   private setProvider(key: string, provider: (text: string) => boolean): void {
@@ -190,14 +208,14 @@ class SpellCheckerProvider {
     const spellChecker = factory.create(affPath, dicPath);
 
     const increaseRefCount = (filePath: string) => {
-      const dir = path.basename(filePath);
+      const dir = path.dirname(filePath);
       this.fileMountRefCount[dir] = !!this.fileMountRefCount[dir] ? this.fileMountRefCount[dir] + 1 : 1;
 
       log.debug(`increaseRefCount: refCount set for '${dir}' to '${this.fileMountRefCount[dir]}'`);
     };
 
     const decreaseRefCount = (filePath: string) => {
-      const dir = path.basename(filePath);
+      const dir = path.dirname(filePath);
       if (this.fileMountRefCount[dir] > 0) {
         this.fileMountRefCount[dir] -= 1;
       }
@@ -222,7 +240,7 @@ class SpellCheckerProvider {
       paths.forEach(p => {
         const ref = decreaseRefCount(p);
         if (ref === 0) {
-          factory.unmount(p);
+          factory.unmount(path.dirname(p));
         }
       });
 
