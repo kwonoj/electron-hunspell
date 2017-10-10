@@ -1,3 +1,13 @@
+<a name="0.0.3"></a>
+## [0.0.3](https://github.com/kwonoj/electron-hunspell/compare/v0.0.2...v0.0.3) (2017-10-10)
+
+
+### Bug Fixes
+
+* **package:** update hunspell-asm to version 0.0.17 ([e1d8bad](https://github.com/kwonoj/electron-hunspell/commit/e1d8bad))
+
+
+
 <a name="0.0.2"></a>
 ## [0.0.2](https://github.com/kwonoj/electron-hunspell/compare/v0.0.1...v0.0.2) (2017-09-24)
 

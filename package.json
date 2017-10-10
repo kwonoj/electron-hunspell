@@ -1,6 +1,6 @@
 {
   "name": "electron-hunspell",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Providing hunspell based spellchecker for Electron applications",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
@@ -76,7 +76,7 @@
     "typescript": "^2.5.2"
   },
   "dependencies": {
-    "hunspell-asm": "0.0.16",
+    "hunspell-asm": "0.0.17",
     "tslib": "^1.7.1",
     "unixify": "^1.0.0"
   }
