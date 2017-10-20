@@ -7,6 +7,8 @@ const init = async () => {
   const browserViewProvider = new SpellCheckerProvider();
 
   (window as any).browserViewProvider = browserViewProvider;
+  await browserViewProvider.initialize();
+
   await browserViewProvider.loadDictionary(
     'en',
     path.join(path.resolve('./'), 'en-US.dic'),

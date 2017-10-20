@@ -16,6 +16,26 @@ describe('spellCheckerProvider', () => {
     expect((provider as any)._verboseLog).to.be.true;
   });
 
+  describe('initialize', () => {
+    it('should init factory', async () => {
+      const loadModuleMock = require('hunspell-asm').loadModule as jest.Mock<any>;
+      const provider = new SpellCheckerProvider();
+
+      await provider.initialize();
+      expect(loadModuleMock.mock.calls).to.have.lengthOf(1);
+    });
+
+    it('should inint factory once', async () => {
+      const loadModuleMock = require('hunspell-asm').loadModule as jest.Mock<any>;
+      loadModuleMock.mockReturnValueOnce({});
+      const provider = new SpellCheckerProvider();
+
+      await provider.initialize();
+      await provider.initialize();
+      expect(loadModuleMock.mock.calls).to.have.lengthOf(1);
+    });
+  });
+
   describe('availableDictionaries', () => {
     it('should return empty if dictionaries are not loaded', () => {
       const provider = new SpellCheckerProvider();
@@ -96,21 +116,6 @@ describe('spellCheckerProvider', () => {
   });
 
   describe('loadDictionary', () => {
-    it('should load asm module once', async () => {
-      const loadModuleMock = require('hunspell-asm').loadModule as jest.Mock<any>;
-      loadModuleMock.mockImplementationOnce(() => ({
-        mountDirectory: jest.fn(() => 'boo'),
-        create: jest.fn()
-      }));
-
-      const provider = new SpellCheckerProvider();
-
-      await provider.loadDictionary('m', 'a', 'b');
-      await provider.loadDictionary('mm', 'a', 'b');
-
-      expect(loadModuleMock.mock.calls).to.have.lengthOf(1);
-    });
-
     it('should throw when key is not valid', async () => {
       const provider = new SpellCheckerProvider();
       let thrown = false;
@@ -135,6 +140,7 @@ describe('spellCheckerProvider', () => {
       }));
 
       const provider = new SpellCheckerProvider();
+      await provider.initialize();
       let thrown = false;
 
       try {
@@ -172,6 +178,8 @@ describe('spellCheckerProvider', () => {
       }));
 
       const provider = new SpellCheckerProvider();
+      await provider.initialize();
+
       await provider.loadDictionary('kk', new Int32Array(1), new Int32Array(1));
       expect(mockMountBuffer.mock.calls).to.have.lengthOf(2);
 
@@ -193,6 +201,8 @@ describe('spellCheckerProvider', () => {
       }));
 
       const provider = new SpellCheckerProvider();
+      await provider.initialize();
+
       await provider.loadDictionary('xx', '/x/a.dic', '/y/a.aff');
       expect(mockMountDirectory.mock.calls).to.have.lengthOf(2);
       expect(mockMountDirectory.mock.calls).to.deep.equal([['/y'], ['/x']]);
@@ -266,6 +276,8 @@ describe('spellCheckerProvider', () => {
       }));
 
       const provider = new SpellCheckerProvider();
+      await provider.initialize();
+
       await provider.loadDictionary('kk', new Int32Array(1), new Int32Array(1));
 
       provider.unloadDictionary('kk');
@@ -288,6 +300,8 @@ describe('spellCheckerProvider', () => {
       }));
 
       const provider = new SpellCheckerProvider();
+      await provider.initialize();
+
       await provider.loadDictionary('kk', '/x/a.dic', '/x/a.aff');
 
       expect((provider as any).fileMountRefCount).to.deep.equal({ '/x': 2 });
@@ -311,6 +325,8 @@ describe('spellCheckerProvider', () => {
       }));
 
       const provider = new SpellCheckerProvider();
+      await provider.initialize();
+
       await provider.loadDictionary('kk', '/y/a.dic', '/x/a.aff');
 
       expect((provider as any).fileMountRefCount).to.deep.equal({ '/x': 1, '/y': 1 });
@@ -337,6 +353,7 @@ describe('spellCheckerProvider', () => {
       }));
 
       const provider = new SpellCheckerProvider();
+      await provider.initialize();
 
       await provider.loadDictionary('kk', '/x/a.dic', '/x/a.aff');
       await provider.loadDictionary('xx', '/x/y.dic', '/x/y.aff');
