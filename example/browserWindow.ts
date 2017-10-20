@@ -6,6 +6,8 @@ enableLogger(console);
 const init = async () => {
   const browserWindowProvider = new SpellCheckerProvider();
   (window as any).browserWindowProvider = browserWindowProvider;
+  await browserWindowProvider.initialize();
+
   await browserWindowProvider.loadDictionary(
     'en',
     path.join(path.resolve('./'), 'en-US.dic'),
