@@ -57,6 +57,19 @@ class SpellCheckerProvider {
   private currentSpellCheckerStartTime: number = Number.NEGATIVE_INFINITY;
 
   /**
+   * Initialize provider.
+   */
+  public async initialize(): Promise<void> {
+    if (!!this.hunspellFactory) {
+      return;
+    }
+
+    log.info(`loadAsmModule: loading hunspell-asm module`);
+    this.hunspellFactory = await loadModule();
+    log.info(`loadAsmModule: asm module loaded successfully`);
+  }
+
+  /**
    * Set current spell checker instance for given locale key then attach into current webFrame.
    * @param {string} key Locale key for spell checker instance.
    */
@@ -125,8 +138,6 @@ class SpellCheckerProvider {
       throw new Error(`Invalid key: ${!!key ? 'already registered key' : 'key is empty'}`);
     }
 
-    await this.loadAsmModule();
-
     const isBufferDictionary = ArrayBuffer.isView(dic) && ArrayBuffer.isView(aff);
     const isFileDictionary = typeof dic === 'string' && typeof aff === 'string';
 
@@ -189,16 +200,6 @@ class SpellCheckerProvider {
     }
 
     webFrame.setSpellCheckProvider(key, true, { spellCheck: provider });
-  }
-
-  private async loadAsmModule(): Promise<void> {
-    if (!!this.hunspellFactory) {
-      return;
-    }
-
-    log.info(`loadAsmModule: loading hunspell-asm module`);
-    this.hunspellFactory = await loadModule();
-    log.info(`loadAsmModule: asm module loaded successfully`);
   }
 
   private mountBufferDictionary(dicBuffer: ArrayBufferView, affBuffer: ArrayBufferView) {
