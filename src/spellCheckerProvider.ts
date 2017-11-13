@@ -1,6 +1,7 @@
 import ElectronType = require('electron'); //tslint:disable-line:no-var-requires no-require-imports
 import { Hunspell, HunspellFactory, loadModule } from 'hunspell-asm';
-import { orderBy } from 'lodash';
+//tslint:disable-next-line:no-require-imports
+import orderBy = require('lodash.orderby');
 import * as path from 'path';
 import * as unixify from 'unixify';
 import { log } from './util/logger';
