@@ -34,6 +34,7 @@ npm install electron-hunspell
 import { SpellCheckerProvider } from 'electron-hunspell';
 
 const provider = new SpellCheckerProvider();
+await provider.initialize();
 ```
 
 Once you have provider instance, you can manage each dictionary based on locale key.
@@ -42,11 +43,11 @@ Once you have provider instance, you can manage each dictionary based on locale 
 await provider.loadDictionary('en', './en-US.dic', './en-US.aff');
 ```
 
-`loadDictionary` internally initializes hunspell module, as well as creating spellchecker instance to corresponding locale key.
+`loadDictionary` creates spellchecker instance to corresponding locale key.
 
 ```typescript
-public async loadDictionary(key: string, dicPath: string, affPath: string): Promise<void>;
-public async loadDictionary(key: string, dicBuffer: ArrayBufferView, affBuffer: ArrayBufferView): Promise<void>;
+public loadDictionary(key: string, dicPath: string, affPath: string): Promise<void>;
+public loadDictionary(key: string, dicBuffer: ArrayBufferView, affBuffer: ArrayBufferView): Promise<void>;
 ```
 
 It also accepts overload of supplying `ArrayBufferView` for cases you're under environment download dictionary via `fetch` or similar manner and have object in memory.
@@ -57,7 +58,7 @@ Once dictionary is loaded in provider instance, you can specify which dictionary
 public switchDictionary(key: string): void
 ```
 
-Note switching dictionary doesn't occur automatically, it should be called explicitly as needed. 
+Note switching dictionary doesn't occur automatically, it should be called explicitly as needed.
 
 When dictionary is no longer needed it should be manually disposed via `unloadDictionary` interface.
 
@@ -73,7 +74,7 @@ To get suggested text for misspelled text use `getSuggestion`
 public getSuggestion(text: string): Readonly<Array<string>>
 ```
 
-It'll ask currently selected spellchecker to get suggestion for misspelling. 
+It'll ask currently selected spellchecker to get suggestion for misspelling.
 
 Few other convenient interfaces are available as well.
 
