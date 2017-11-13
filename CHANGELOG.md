@@ -1,3 +1,13 @@
+<a name="0.0.5"></a>
+## [0.0.5](https://github.com/kwonoj/electron-hunspell/compare/v0.0.4...v0.0.5) (2017-11-13)
+
+
+### Bug Fixes
+
+* **package:** correct dependency ([e7b3076](https://github.com/kwonoj/electron-hunspell/commit/e7b3076))
+
+
+
 <a name="0.0.4"></a>
 ## [0.0.4](https://github.com/kwonoj/electron-hunspell/compare/v0.0.3...v0.0.4) (2017-10-20)
 
