@@ -16,13 +16,12 @@ module.exports = wallaby => ({
     regular: 1
   },
 
-  setup: function(w) {
-    jestConfig = {
-      resetMocks: true,
-      resetModules: true,
-      clearMocks: true
-    };
-
-    w.testFramework.configure(jestConfig);
+  preprocessors: {
+    '**/*.js?(x)': file =>
+      require('babel-core').transform(file.content, {
+        sourceMap: true,
+        filename: file.path,
+        presets: ['babel-preset-jest']
+      })
   }
 });
