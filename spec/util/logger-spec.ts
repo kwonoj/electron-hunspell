@@ -1,17 +1,10 @@
-//tslint:disable:no-require-imports
 import { expect } from 'chai';
-import loggerType = require('../../src/util/logger');
+import { enableLogger as hunspellEnableLogger } from 'hunspell-asm';
+import { enableLogger, log } from '../../src/util/logger';
+
+jest.mock('hunspell-asm');
 
 describe('logger', () => {
-  let log: typeof loggerType.log;
-  let enableLogger: typeof loggerType.enableLogger;
-
-  beforeEach(() => {
-    jest.mock('hunspell-asm');
-
-    ({ log, enableLogger } = require('../../src/util/logger'));
-  });
-
   it('should do nothing by default', () => {
     Object.keys(log).forEach(logLevel => expect(() => log[logLevel]('')).to.not.throw());
   });
@@ -70,16 +63,16 @@ describe('logger', () => {
   });
 
   it('should set function to hunspell logger', () => {
-    const hunspellEnableLogger = require('hunspell-asm').enableLogger;
+    jest.resetAllMocks();
 
     const mockLogFn = jest.fn();
     enableLogger(mockLogFn);
 
-    expect(hunspellEnableLogger.mock.calls).to.have.lengthOf(1);
+    expect((hunspellEnableLogger as any).mock.calls).to.have.lengthOf(1);
   });
 
   it('should set debug fn from object to hunspell logger', () => {
-    const hunspellEnableLogger = require('hunspell-asm').enableLogger;
+    jest.resetAllMocks();
 
     const mockLogger = {
       debug: jest.fn(),
@@ -90,6 +83,6 @@ describe('logger', () => {
 
     enableLogger(mockLogger);
 
-    expect(hunspellEnableLogger.mock.calls).to.have.lengthOf(1);
+    expect((hunspellEnableLogger as any).mock.calls).to.have.lengthOf(1);
   });
 });

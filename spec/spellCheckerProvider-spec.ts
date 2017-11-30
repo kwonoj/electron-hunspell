@@ -1,13 +1,15 @@
-//tslint:disable:no-require-imports
 import { expect } from 'chai';
-import spellCheckerProviderType = require('../src/spellCheckerProvider');
+import { webFrame } from 'electron';
+import { loadModule } from 'hunspell-asm';
+import { SpellCheckerProvider } from '../src/spellCheckerProvider';
+
+jest.mock('hunspell-asm');
+jest.mock('electron', () => ({ webFrame: { setSpellCheckProvider: jest.fn() } }), {
+  virtual: true
+});
 
 describe('spellCheckerProvider', () => {
-  let SpellCheckerProvider: typeof spellCheckerProviderType.SpellCheckerProvider;
-  beforeEach(() => {
-    jest.mock('hunspell-asm');
-    SpellCheckerProvider = require('../src/spellCheckerProvider').SpellCheckerProvider;
-  });
+  beforeEach(() => jest.resetAllMocks());
 
   it('should able to set verbose', () => {
     const provider = new SpellCheckerProvider();
@@ -18,15 +20,14 @@ describe('spellCheckerProvider', () => {
 
   describe('initialize', () => {
     it('should init factory', async () => {
-      const loadModuleMock = require('hunspell-asm').loadModule as jest.Mock<any>;
       const provider = new SpellCheckerProvider();
 
       await provider.initialize();
-      expect(loadModuleMock.mock.calls).to.have.lengthOf(1);
+      expect((loadModule as jest.Mock<any>).mock.calls).to.have.lengthOf(1);
     });
 
     it('should inint factory once', async () => {
-      const loadModuleMock = require('hunspell-asm').loadModule as jest.Mock<any>;
+      const loadModuleMock = loadModule as jest.Mock<any>;
       loadModuleMock.mockReturnValueOnce({});
       const provider = new SpellCheckerProvider();
 
@@ -133,7 +134,7 @@ describe('spellCheckerProvider', () => {
     it('should throw when key is already registered', async () => {
       const mockCreate = jest.fn();
       const mockMountBuffer = jest.fn(() => 'boo');
-      const loadModuleMock = require('hunspell-asm').loadModule as jest.Mock<any>;
+      const loadModuleMock = loadModule as jest.Mock<any>;
       loadModuleMock.mockImplementationOnce(() => ({
         mountBuffer: mockMountBuffer,
         create: mockCreate
@@ -171,7 +172,7 @@ describe('spellCheckerProvider', () => {
     it('should load buffer dictionary', async () => {
       const mockCreate = jest.fn();
       const mockMountBuffer = jest.fn(() => 'boo');
-      const loadModuleMock = require('hunspell-asm').loadModule as jest.Mock<any>;
+      const loadModuleMock = loadModule as jest.Mock<any>;
       loadModuleMock.mockImplementationOnce(() => ({
         mountBuffer: mockMountBuffer,
         create: mockCreate
@@ -194,7 +195,7 @@ describe('spellCheckerProvider', () => {
       const mockMountDirectory = jest.fn(x => x);
       const mockCreate = jest.fn();
 
-      const loadModuleMock = require('hunspell-asm').loadModule as jest.Mock<any>;
+      const loadModuleMock = loadModule as jest.Mock<any>;
       loadModuleMock.mockImplementationOnce(() => ({
         mountDirectory: mockMountDirectory,
         create: mockCreate
@@ -217,12 +218,8 @@ describe('spellCheckerProvider', () => {
 
   describe('unloadDictionary', () => {
     it('should clear currently selected key', () => {
-      (process as any).type = 'renderer';
-
-      const mockSetSpellCheckerProvider = jest.fn();
-      jest.mock('electron', () => ({ webFrame: { setSpellCheckProvider: mockSetSpellCheckerProvider } }), {
-        virtual: true
-      });
+      const oldType = process.type;
+      process.type = 'renderer';
 
       const provider = new SpellCheckerProvider();
       (provider as any)._currentSpellCheckerKey = 'kk';
@@ -236,10 +233,12 @@ describe('spellCheckerProvider', () => {
       expect((provider as any)._currentSpellCheckerKey).to.be.null;
       expect((provider as any).currentSpellCheckerStartTime).to.equal(Number.NEGATIVE_INFINITY);
 
-      const calls = mockSetSpellCheckerProvider.mock.calls;
+      const calls = (webFrame.setSpellCheckProvider as jest.Mock<any>).mock.calls;
       expect(calls).to.have.lengthOf(1);
 
       expect(calls[0][2].spellCheck('boo')).to.be.true;
+
+      process.type = oldType;
     });
 
     it('should not throw when key is not valid', () => {
@@ -268,7 +267,7 @@ describe('spellCheckerProvider', () => {
       const mockCreate = jest.fn(() => mockChecker);
       const mockMountBuffer = jest.fn(() => 'boo');
       const mockUnmount = jest.fn();
-      const loadModuleMock = require('hunspell-asm').loadModule as jest.Mock<any>;
+      const loadModuleMock = loadModule as jest.Mock<any>;
       loadModuleMock.mockImplementationOnce(() => ({
         mountBuffer: mockMountBuffer,
         create: mockCreate,
@@ -292,7 +291,7 @@ describe('spellCheckerProvider', () => {
       const mockMountDirectory = jest.fn(x => x);
       const mockUnmount = jest.fn();
 
-      const loadModuleMock = require('hunspell-asm').loadModule as jest.Mock<any>;
+      const loadModuleMock = loadModule as jest.Mock<any>;
       loadModuleMock.mockImplementationOnce(() => ({
         mountDirectory: mockMountDirectory,
         create: mockCreate,
@@ -317,7 +316,7 @@ describe('spellCheckerProvider', () => {
       const mockMountDirectory = jest.fn(x => x);
       const mockUnmount = jest.fn();
 
-      const loadModuleMock = require('hunspell-asm').loadModule as jest.Mock<any>;
+      const loadModuleMock = loadModule as jest.Mock<any>;
       loadModuleMock.mockImplementationOnce(() => ({
         mountDirectory: mockMountDirectory,
         create: mockCreate,
@@ -345,7 +344,7 @@ describe('spellCheckerProvider', () => {
       const mockMountDirectory = jest.fn(x => x);
       const mockUnmount = jest.fn();
 
-      const loadModuleMock = require('hunspell-asm').loadModule as jest.Mock<any>;
+      const loadModuleMock = loadModule as jest.Mock<any>;
       loadModuleMock.mockImplementationOnce(() => ({
         mountDirectory: mockMountDirectory,
         create: mockCreate,
@@ -427,8 +426,6 @@ describe('spellCheckerProvider', () => {
     });
 
     it('should not throw if webframe does not exist to attach', () => {
-      process.type = 'meh';
-
       const provider = new SpellCheckerProvider();
       (provider as any).spellCheckerTable = {
         ll: {}
@@ -438,12 +435,8 @@ describe('spellCheckerProvider', () => {
     });
 
     it('should attach into webframe', () => {
+      const oldType = process.type;
       process.type = 'renderer';
-
-      const mockSetSpellCheckerProvider = jest.fn();
-      jest.mock('electron', () => ({ webFrame: { setSpellCheckProvider: mockSetSpellCheckerProvider } }), {
-        virtual: true
-      });
 
       const provider = new SpellCheckerProvider();
       (provider as any).spellCheckerTable = {
@@ -456,7 +449,7 @@ describe('spellCheckerProvider', () => {
 
       provider.switchDictionary('ll');
       expect(provider.selectedDictionary).to.equal('ll');
-      const calls = mockSetSpellCheckerProvider.mock.calls;
+      const calls = (webFrame.setSpellCheckProvider as jest.Mock<any>).mock.calls;
       expect(calls).to.have.lengthOf(1);
       expect(calls[0][0]).to.equal('ll');
       expect(calls[0][1]).to.equal(true);
@@ -465,16 +458,13 @@ describe('spellCheckerProvider', () => {
       const spellMock = (provider as any).spellCheckerTable['ll'].spellChecker.spell;
       expect(spellMock.mock.calls).to.have.lengthOf(1);
       expect(spellMock.mock.calls[0]).to.deep.equal(['boo']);
+
+      process.type = oldType;
     });
 
     it('should attach into webframe with verbose log', () => {
-      const root = require('getroot').root;
-      root.process.type = 'renderer';
-
-      const mockSetSpellCheckerProvider = jest.fn();
-      jest.mock('electron', () => ({ webFrame: { setSpellCheckProvider: mockSetSpellCheckerProvider } }), {
-        virtual: true
-      });
+      const oldType = process.type;
+      process.type = 'renderer';
 
       const provider = new SpellCheckerProvider();
       provider.verboseLog = true;
@@ -488,7 +478,7 @@ describe('spellCheckerProvider', () => {
 
       provider.switchDictionary('ll');
       expect(provider.selectedDictionary).to.equal('ll');
-      const calls = mockSetSpellCheckerProvider.mock.calls;
+      const calls = (webFrame.setSpellCheckProvider as jest.Mock<any>).mock.calls;
       expect(calls).to.have.lengthOf(1);
       expect(calls[0][0]).to.equal('ll');
       expect(calls[0][1]).to.equal(true);
@@ -497,6 +487,8 @@ describe('spellCheckerProvider', () => {
       const spellMock = (provider as any).spellCheckerTable['ll'].spellChecker.spell;
       expect(spellMock.mock.calls).to.have.lengthOf(1);
       expect(spellMock.mock.calls[0]).to.deep.equal(['boo']);
+
+      process.type = oldType;
     });
   });
 });
