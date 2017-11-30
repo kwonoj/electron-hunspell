@@ -10,6 +10,7 @@
     "strictNullChecks": true,
     "noUnusedLocals": true,
     "noImplicitThis": true,
+    "noEmitHelpers": true,
     "noUnusedParameters": true,
     "module": "commonjs",
     "moduleResolution": "node",
