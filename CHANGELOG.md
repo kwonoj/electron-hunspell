@@ -1,3 +1,13 @@
+<a name="0.0.6"></a>
+## [0.0.6](https://github.com/kwonoj/electron-hunspell/compare/v0.0.5...v0.0.6) (2017-11-30)
+
+
+### Features
+
+* **hunspell:** bump up hunspell-asm ([55562bc](https://github.com/kwonoj/electron-hunspell/commit/55562bc))
+
+
+
 <a name="0.0.5"></a>
 ## [0.0.5](https://github.com/kwonoj/electron-hunspell/compare/v0.0.4...v0.0.5) (2017-11-13)
 
