@@ -1,6 +1,6 @@
 {
   "name": "electron-hunspell",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Providing hunspell based spellchecker for Electron applications",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
