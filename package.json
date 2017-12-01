@@ -1,6 +1,6 @@
 {
   "name": "electron-hunspell",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Providing hunspell based spellchecker for Electron applications",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
@@ -51,12 +51,12 @@
   },
   "homepage": "https://github.com/kwonoj/electron-hunspell#readme",
   "devDependencies": {
-    "@commitlint/cli": "^5.0.0",
+    "@commitlint/cli": "^5.2.0",
     "@commitlint/config-angular": "^5.0.0",
-    "@types/chai": "^4.0.3",
-    "@types/jest": "^21.1.0",
+    "@types/chai": "^4.0.6",
+    "@types/jest": "^21.1.8",
     "@types/lodash.orderby": "^4.6.3",
-    "@types/node": "^8.0.25",
+    "@types/node": "^8.0.53",
     "chai": "^4.1.1",
     "commitizen": "2.9.6",
     "conventional-changelog-cli": "^1.3.2",
@@ -68,16 +68,16 @@
     "npm-run-all": "^4.0.2",
     "prettier": "^1.5.3",
     "shx": "^0.2.2",
-    "ts-jest": "^21.0.0",
+    "ts-jest": "^21.2.3",
     "ts-node": "^3.3.0",
     "tslint": "^5.6.0",
     "tslint-no-unused-expression-chai": "0.0.3",
-    "typescript": "^2.5.2"
+    "typescript": "^2.6.2"
   },
   "dependencies": {
-    "hunspell-asm": "0.0.17",
+    "hunspell-asm": "^1.0.0",
     "lodash.orderby": "^4.6.0",
-    "tslib": "^1.7.1",
+    "tslib": "^1.8.0",
     "unixify": "^1.0.0"
   }
 }
