@@ -9,9 +9,11 @@ src/
 test/
 !dist/src
 examples/
+example/
 symbols/
 .travis.yml
 appveyor.yml
+jest.json
 jest-cld.json
 jest-cld-asm.json
 tsconfg.json
