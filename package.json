@@ -68,7 +68,7 @@
     "npm-run-all": "4.0.2",
     "prettier": "1.11.1",
     "shx": "0.2.2",
-    "ts-jest": "22.4.1",
+    "ts-jest": "22.4.2",
     "tslint": "5.9.1",
     "tslint-no-unused-expression-chai": "0.0.3",
     "typescript": "2.7.2"
