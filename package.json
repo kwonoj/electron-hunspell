@@ -76,7 +76,7 @@
   "dependencies": {
     "hunspell-asm": "1.0.2",
     "lodash.orderby": "4.6.0",
-    "tslib": "1.9.2",
+    "tslib": "1.9.3",
     "unixify": "1.0.0"
   }
 }
