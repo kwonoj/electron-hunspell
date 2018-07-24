@@ -55,7 +55,7 @@
     "@commitlint/config-angular": "^7.0.1",
     "@types/chai": "^4.1.4",
     "@types/jest": "23.1.6",
-    "@types/lodash.orderby": "4.6.3",
+    "@types/lodash.orderby": "4.6.4",
     "@types/node": "10.5.2",
     "chai": "^4.1.2",
     "commitizen": "2.10.1",
