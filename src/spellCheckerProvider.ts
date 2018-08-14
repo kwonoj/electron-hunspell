@@ -1,9 +1,8 @@
-import ElectronType = require('electron'); //tslint:disable-line:no-var-requires no-require-imports
 import { Hunspell, HunspellFactory, loadModule } from 'hunspell-asm';
-//tslint:disable-next-line:no-require-imports
-import orderBy = require('lodash.orderby');
+//to conform esm + webpack, enable esModuleInterop compiler option
+import orderBy from 'lodash/orderBy';
 import * as path from 'path';
-import * as unixify from 'unixify';
+import unixify from 'unixify';
 import { log } from './util/logger';
 
 /**
@@ -28,7 +27,7 @@ class SpellCheckerProvider {
    */
   public get availableDictionaries(): Readonly<Array<string>> {
     const array = Object.keys(this.spellCheckerTable).map(key => ({ key, uptime: this.spellCheckerTable[key].uptime }));
-    return orderBy(array, ['uptime'], ['desc']).map(v => v.key);
+    return orderBy(array, ['uptime'], ['desc']).map((v: { key: string }) => v.key);
   }
 
   private _currentSpellCheckerKey: string | null = null;
@@ -192,7 +191,7 @@ class SpellCheckerProvider {
   }
 
   private setProvider(key: string, provider: (text: string) => boolean): void {
-    const webFrame: typeof ElectronType.webFrame | null =
+    const webFrame: typeof import('electron').webFrame | null =
       process.type === 'renderer' ? require('electron').webFrame : null; //tslint:disable-line:no-var-requires no-require-imports
 
     if (!webFrame) {
