@@ -1,7 +1,8 @@
 import { Hunspell, HunspellFactory, loadModule } from 'hunspell-asm';
-import * as orderBy from 'lodash/orderBy';
+//to conform esm + webpack, enable esModuleInterop compiler option
+import orderBy from 'lodash/orderBy';
 import * as path from 'path';
-import * as unixify from 'unixify';
+import unixify from 'unixify';
 import { log } from './util/logger';
 
 /**
@@ -26,7 +27,7 @@ class SpellCheckerProvider {
    */
   public get availableDictionaries(): Readonly<Array<string>> {
     const array = Object.keys(this.spellCheckerTable).map(key => ({ key, uptime: this.spellCheckerTable[key].uptime }));
-    return orderBy(array, ['uptime'], ['desc']).map(v => v.key);
+    return orderBy(array, ['uptime'], ['desc']).map((v: { key: string }) => v.key);
   }
 
   private _currentSpellCheckerKey: string | null = null;
