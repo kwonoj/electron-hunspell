@@ -1,3 +1,16 @@
+<a name="0.0.9"></a>
+## [0.0.9](https://github.com/kwonoj/electron-hunspell/compare/v0.0.8...v0.0.9) (2018-08-14)
+
+
+### Bug Fixes
+
+* **lodash:** update import path ([aa9125e](https://github.com/kwonoj/electron-hunspell/commit/aa9125e))
+* **package:** update tslib to version 1.9.1 ([7ebeec6](https://github.com/kwonoj/electron-hunspell/commit/7ebeec6))
+* **package:** update tslib to version 1.9.2 ([7f13fca](https://github.com/kwonoj/electron-hunspell/commit/7f13fca))
+* **package:** update tslib to version 1.9.3 ([714a70c](https://github.com/kwonoj/electron-hunspell/commit/714a70c))
+
+
+
 <a name="0.0.8"></a>
 ## [0.0.8](https://github.com/kwonoj/electron-hunspell/compare/v0.0.7...v0.0.8) (2018-03-07)
 
