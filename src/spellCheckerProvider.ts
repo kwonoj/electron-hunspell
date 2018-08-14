@@ -1,7 +1,5 @@
-import ElectronType = require('electron'); //tslint:disable-line:no-var-requires no-require-imports
 import { Hunspell, HunspellFactory, loadModule } from 'hunspell-asm';
-//tslint:disable-next-line:no-require-imports
-import orderBy = require('lodash.orderby');
+import * as orderBy from 'lodash/orderBy';
 import * as path from 'path';
 import * as unixify from 'unixify';
 import { log } from './util/logger';
@@ -192,7 +190,7 @@ class SpellCheckerProvider {
   }
 
   private setProvider(key: string, provider: (text: string) => boolean): void {
-    const webFrame: typeof ElectronType.webFrame | null =
+    const webFrame: typeof import('electron').webFrame | null =
       process.type === 'renderer' ? require('electron').webFrame : null; //tslint:disable-line:no-var-requires no-require-imports
 
     if (!webFrame) {
