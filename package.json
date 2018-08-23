@@ -57,7 +57,7 @@
     "@commitlint/config-angular": "^7.0.1",
     "@types/chai": "^4.1.4",
     "@types/jest": "23.3.1",
-    "@types/node": "10.7.1",
+    "@types/node": "10.7.2",
     "chai": "^4.1.2",
     "commitizen": "2.10.1",
     "conventional-changelog-cli": "2.0.1",
