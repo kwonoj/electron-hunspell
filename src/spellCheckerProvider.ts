@@ -1,8 +1,6 @@
 import { Hunspell, HunspellFactory, loadModule } from 'hunspell-asm';
-//to conform esm + webpack, enable esModuleInterop compiler option
-import orderBy from 'lodash/orderBy';
 import * as path from 'path';
-import unixify from 'unixify';
+import * as unixify from 'unixify';
 import { log } from './util/logger';
 
 /**
@@ -16,6 +14,13 @@ interface SpellChecker {
 }
 
 /**
+ * Naive utility method to lodash.orderBy returns ascending order.
+ *
+ * [].sort(sortBy('keyToSort'))
+ */
+const sortBy = (key: string) => (a: object, b: object) => (a[key] > b[key] ? 1 : b[key] > a[key] ? -1 : 0);
+
+/**
  * Provides interface to manage spell checker and corresponding dictionaries, as well as attaching into electron's webFrame.
  */
 class SpellCheckerProvider {
@@ -27,7 +32,11 @@ class SpellCheckerProvider {
    */
   public get availableDictionaries(): Readonly<Array<string>> {
     const array = Object.keys(this.spellCheckerTable).map(key => ({ key, uptime: this.spellCheckerTable[key].uptime }));
-    return orderBy(array, ['uptime'], ['desc']).map((v: { key: string }) => v.key);
+    //order by key `uptime`, then reverse to descending order
+    return array
+      .sort(sortBy('uptime'))
+      .reverse()
+      .map((v: { key: string }) => v.key);
   }
 
   private _currentSpellCheckerKey: string | null = null;
