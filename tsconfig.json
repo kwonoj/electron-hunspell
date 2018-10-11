@@ -12,7 +12,6 @@
     "noUnusedParameters": true,
     "module": "commonjs",
     "moduleResolution": "node",
-    "esModuleInterop": true,
     "importHelpers": true,
     "target": "es5",
     "noEmit": true,
