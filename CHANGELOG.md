@@ -1,3 +1,13 @@
+<a name="0.1.1"></a>
+## [0.1.1](https://github.com/kwonoj/electron-hunspell/compare/v0.0.9...v0.1.1) (2018-10-11)
+
+
+### Features
+
+* **spellcheckprovider:** do not depends on lodash ([9f423df](https://github.com/kwonoj/electron-hunspell/commit/9f423df))
+
+
+
 <a name="0.1.0"></a>
 # [0.1.0](https://github.com/kwonoj/electron-hunspell/compare/v0.0.9...v0.1.0) (2018-10-10)
 
