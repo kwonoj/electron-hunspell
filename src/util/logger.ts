@@ -24,23 +24,16 @@ const log: Readonly<logObjectType> = {
 
 /**
  * Set logger for prints out internal behavior.
- * @param {logFunctionType | logObjectType} logger Logger object contains loglevel function (debug, info, warn, error)
- * or single function to log. If single function is provided, all loglevel will use given function.
- * If logger object is provided, it should have all loglevel function.
+ * @param {logFunctionType | Partial<logObjectType>} logger Logger object contains loglevel function (debug, info, warn, error)
+ * or single function to log.
  */
 function enableLogger(logger: logFunctionType): void;
 function enableLogger(logger: Partial<logObjectType>): void;
 function enableLogger(logger: logFunctionType | Partial<logObjectType>) {
   const isLogFunction = typeof logger === 'function';
-  Object.keys(log).forEach(
-    key =>
-      (log[key] = isLogFunction
-        ? logger
-        : logger[key] ||
-          (() => {
-            /*noop*/
-          }))
-  );
+
+  //if logger is fn, assign to all loglevel. If logger is partial object, assign available logger or fall back to noop.
+  Object.keys(log).forEach(key => (log[key] = isLogFunction ? logger : logger[key] || noopLog));
 
   setHunspellLogger(log.debug.bind(log));
 }
