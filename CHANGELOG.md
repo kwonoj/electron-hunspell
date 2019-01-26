@@ -1,3 +1,26 @@
+<a name="1.0.0-beta.1"></a>
+# [1.0.0-beta.1](https://github.com/kwonoj/electron-hunspell/compare/v0.1.1...v1.0.0-beta.1) (2019-01-26)
+
+
+### Bug Fixes
+
+* **enablelogger:** do not propagate partial logger ([de3c5da](https://github.com/kwonoj/electron-hunspell/commit/de3c5da))
+* **package:** update hunspell-asm to version 1.1.2 ([6f002d8](https://github.com/kwonoj/electron-hunspell/commit/6f002d8))
+
+
+### Features
+
+* **createprovider:** treeshakable provider factory ([2c221d4](https://github.com/kwonoj/electron-hunspell/commit/2c221d4))
+* **hunspell:** bump up hunspell ([1595166](https://github.com/kwonoj/electron-hunspell/commit/1595166))
+
+
+### BREAKING CHANGES
+
+* **createprovider:** provider create moved to factory function
+* **createprovider:** wasm binary is no longer bundled in js preamble
+
+
+
 <a name="0.1.1"></a>
 ## [0.1.1](https://github.com/kwonoj/electron-hunspell/compare/v0.0.9...v0.1.1) (2018-10-11)
 
