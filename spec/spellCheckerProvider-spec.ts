@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { webFrame } from 'electron';
 import { loadModule } from 'hunspell-asm';
-import { SpellCheckerProvider } from '../src/spellCheckerProvider';
+import { createProvider } from '../src/createProvider';
 
 jest.mock('hunspell-asm');
 jest.mock('electron', () => ({ webFrame: { setSpellCheckProvider: jest.fn() } }), {
@@ -12,7 +12,7 @@ describe('spellCheckerProvider', () => {
   beforeEach(() => jest.resetAllMocks());
 
   it('should able to set verbose', () => {
-    const provider = new SpellCheckerProvider();
+    const provider = createProvider();
     provider.verboseLog = true;
 
     expect((provider as any)._verboseLog).to.be.true;
@@ -20,7 +20,7 @@ describe('spellCheckerProvider', () => {
 
   describe('initialize', () => {
     it('should init factory', async () => {
-      const provider = new SpellCheckerProvider();
+      const provider = createProvider();
 
       await provider.initialize();
       expect((loadModule as jest.Mock<any>).mock.calls).to.have.lengthOf(1);
@@ -29,7 +29,7 @@ describe('spellCheckerProvider', () => {
     it('should inint factory once', async () => {
       const loadModuleMock = loadModule as jest.Mock<any>;
       loadModuleMock.mockReturnValueOnce({});
-      const provider = new SpellCheckerProvider();
+      const provider = createProvider();
 
       await provider.initialize();
       await provider.initialize();
@@ -39,12 +39,12 @@ describe('spellCheckerProvider', () => {
 
   describe('availableDictionaries', () => {
     it('should return empty if dictionaries are not loaded', () => {
-      const provider = new SpellCheckerProvider();
+      const provider = createProvider();
       expect(provider.availableDictionaries).to.be.empty;
     });
 
     it('should return dictionaries sorted by uptime', () => {
-      const provider = new SpellCheckerProvider();
+      const provider = createProvider();
       (provider as any).spellCheckerTable = {
         kr: { uptime: 100 },
         en: { uptime: 80 },
@@ -58,13 +58,13 @@ describe('spellCheckerProvider', () => {
 
   describe('selectedDictionary', () => {
     it('should return null if not selected', () => {
-      const provider = new SpellCheckerProvider();
+      const provider = createProvider();
 
       expect(provider.selectedDictionary).to.be.null;
     });
 
     it('should return currently selected dictionary', () => {
-      const provider = new SpellCheckerProvider();
+      const provider = createProvider();
       (provider as any)._currentSpellCheckerKey = 'kr';
 
       expect(provider.selectedDictionary).to.equal('kr');
@@ -73,13 +73,13 @@ describe('spellCheckerProvider', () => {
 
   describe('getSuggestion', () => {
     it('should return empty without current checker key', () => {
-      const provider = new SpellCheckerProvider();
+      const provider = createProvider();
       const suggestion = provider.getSuggestion('boo');
       expect(suggestion).to.be.empty;
     });
 
     it('should return empty without checker instance', () => {
-      const provider = new SpellCheckerProvider();
+      const provider = createProvider();
       (provider as any)._currentSpellCheckerKey = 'kr';
 
       const suggestion = provider.getSuggestion('boo');
@@ -87,7 +87,7 @@ describe('spellCheckerProvider', () => {
     });
 
     it('should return suggestions with verbose log', () => {
-      const provider = new SpellCheckerProvider();
+      const provider = createProvider();
       provider.verboseLog = true;
 
       (provider as any)._currentSpellCheckerKey = 'kr';
@@ -102,7 +102,7 @@ describe('spellCheckerProvider', () => {
     });
 
     it('should return suggestions', () => {
-      const provider = new SpellCheckerProvider();
+      const provider = createProvider();
 
       (provider as any)._currentSpellCheckerKey = 'kr';
       (provider as any).spellCheckerTable['kr'] = {
@@ -118,7 +118,7 @@ describe('spellCheckerProvider', () => {
 
   describe('loadDictionary', () => {
     it('should throw when key is not valid', async () => {
-      const provider = new SpellCheckerProvider();
+      const provider = createProvider();
       let thrown = false;
 
       try {
@@ -140,7 +140,7 @@ describe('spellCheckerProvider', () => {
         create: mockCreate
       }));
 
-      const provider = new SpellCheckerProvider();
+      const provider = createProvider();
       await provider.initialize();
       let thrown = false;
 
@@ -156,7 +156,7 @@ describe('spellCheckerProvider', () => {
     });
 
     it('should throw when dictionary is not valid', async () => {
-      const provider = new SpellCheckerProvider();
+      const provider = createProvider();
       let thrown = false;
 
       try {
@@ -178,7 +178,7 @@ describe('spellCheckerProvider', () => {
         create: mockCreate
       }));
 
-      const provider = new SpellCheckerProvider();
+      const provider = createProvider();
       await provider.initialize();
 
       await provider.loadDictionary('kk', new Int32Array(1), new Int32Array(1));
@@ -201,7 +201,7 @@ describe('spellCheckerProvider', () => {
         create: mockCreate
       }));
 
-      const provider = new SpellCheckerProvider();
+      const provider = createProvider();
       await provider.initialize();
 
       await provider.loadDictionary('xx', '/x/a.dic', '/y/a.aff');
@@ -218,10 +218,10 @@ describe('spellCheckerProvider', () => {
 
   describe('unloadDictionary', () => {
     it('should clear currently selected key', () => {
-      const oldType = process.type;
-      process.type = 'renderer';
+      const oldType = (process as any).type;
+      (process as any).type = 'renderer';
 
-      const provider = new SpellCheckerProvider();
+      const provider = createProvider();
       (provider as any)._currentSpellCheckerKey = 'kk';
       (provider as any).spellCheckerTable = {
         kk: {
@@ -238,22 +238,22 @@ describe('spellCheckerProvider', () => {
 
       expect(calls[0][2].spellCheck('boo')).to.be.true;
 
-      process.type = oldType;
+      (process as any).type = oldType;
     });
 
     it('should not throw when key is not valid', () => {
-      const provider = new SpellCheckerProvider();
+      const provider = createProvider();
       expect(() => provider.unloadDictionary(null as any)).to.not.throw();
     });
 
     it('should not throw when dictionary is not available', () => {
-      const provider = new SpellCheckerProvider();
+      const provider = createProvider();
       expect(() => provider.unloadDictionary('meh')).to.not.throw();
     });
 
     it('should destroy spellchecker instance', () => {
       const dispose = jest.fn();
-      const provider = new SpellCheckerProvider();
+      const provider = createProvider();
       (provider as any).spellCheckerTable = {
         kk: { dispose }
       };
@@ -274,7 +274,7 @@ describe('spellCheckerProvider', () => {
         unmount: mockUnmount
       }));
 
-      const provider = new SpellCheckerProvider();
+      const provider = createProvider();
       await provider.initialize();
 
       await provider.loadDictionary('kk', new Int32Array(1), new Int32Array(1));
@@ -298,7 +298,7 @@ describe('spellCheckerProvider', () => {
         unmount: mockUnmount
       }));
 
-      const provider = new SpellCheckerProvider();
+      const provider = createProvider();
       await provider.initialize();
 
       await provider.loadDictionary('kk', '/x/a.dic', '/x/a.aff');
@@ -323,7 +323,7 @@ describe('spellCheckerProvider', () => {
         unmount: mockUnmount
       }));
 
-      const provider = new SpellCheckerProvider();
+      const provider = createProvider();
       await provider.initialize();
 
       await provider.loadDictionary('kk', '/y/a.dic', '/x/a.aff');
@@ -351,7 +351,7 @@ describe('spellCheckerProvider', () => {
         unmount: mockUnmount
       }));
 
-      const provider = new SpellCheckerProvider();
+      const provider = createProvider();
       await provider.initialize();
 
       await provider.loadDictionary('kk', '/x/a.dic', '/x/a.aff');
@@ -373,7 +373,7 @@ describe('spellCheckerProvider', () => {
 
   describe('switchDictionary', () => {
     it('should throw if dictionary is not available', () => {
-      const provider = new SpellCheckerProvider();
+      const provider = createProvider();
 
       expect(() => provider.switchDictionary('k')).to.throw();
     });
@@ -381,7 +381,7 @@ describe('spellCheckerProvider', () => {
     it('should log uptime if current dictionary exists', () => {
       const _now = Date.now;
 
-      const provider = new SpellCheckerProvider();
+      const provider = createProvider();
       (provider as any)._currentSpellCheckerKey = 'kk';
       (provider as any).currentSpellCheckerStartTime = 10;
       (provider as any).spellCheckerTable = {
@@ -399,7 +399,7 @@ describe('spellCheckerProvider', () => {
     it('should ignore uptime if starttime exist but current dictionary not exists', () => {
       const _now = Date.now;
 
-      const provider = new SpellCheckerProvider();
+      const provider = createProvider();
       (provider as any).currentSpellCheckerStartTime = 10;
       (provider as any).spellCheckerTable = {
         kk: { uptime: 5 },
@@ -414,7 +414,7 @@ describe('spellCheckerProvider', () => {
     });
 
     it('should start uptime for new dictionary', () => {
-      const provider = new SpellCheckerProvider();
+      const provider = createProvider();
       (provider as any).spellCheckerTable = {
         ll: {}
       };
@@ -426,7 +426,7 @@ describe('spellCheckerProvider', () => {
     });
 
     it('should not throw if webframe does not exist to attach', () => {
-      const provider = new SpellCheckerProvider();
+      const provider = createProvider();
       (provider as any).spellCheckerTable = {
         ll: {}
       };
@@ -435,10 +435,10 @@ describe('spellCheckerProvider', () => {
     });
 
     it('should attach into webframe', () => {
-      const oldType = process.type;
-      process.type = 'renderer';
+      const oldType = (process as any).type;
+      (process as any).type = 'renderer';
 
-      const provider = new SpellCheckerProvider();
+      const provider = createProvider();
       (provider as any).spellCheckerTable = {
         ll: {
           spellChecker: {
@@ -459,14 +459,14 @@ describe('spellCheckerProvider', () => {
       expect(spellMock.mock.calls).to.have.lengthOf(1);
       expect(spellMock.mock.calls[0]).to.deep.equal(['boo']);
 
-      process.type = oldType;
+      (process as any).type = oldType;
     });
 
     it('should attach into webframe with verbose log', () => {
-      const oldType = process.type;
-      process.type = 'renderer';
+      const oldType = (process as any).type;
+      (process as any).type = 'renderer';
 
-      const provider = new SpellCheckerProvider();
+      const provider = createProvider();
       provider.verboseLog = true;
       (provider as any).spellCheckerTable = {
         ll: {
@@ -488,7 +488,7 @@ describe('spellCheckerProvider', () => {
       expect(spellMock.mock.calls).to.have.lengthOf(1);
       expect(spellMock.mock.calls[0]).to.deep.equal(['boo']);
 
-      process.type = oldType;
+      (process as any).type = oldType;
     });
   });
 });
