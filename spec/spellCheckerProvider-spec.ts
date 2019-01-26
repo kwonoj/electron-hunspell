@@ -218,8 +218,8 @@ describe('spellCheckerProvider', () => {
 
   describe('unloadDictionary', () => {
     it('should clear currently selected key', () => {
-      const oldType = (process as any).type;
-      (process as any).type = 'renderer';
+      const oldType = process.type;
+      process.type = 'renderer';
 
       const provider = createProvider();
       (provider as any)._currentSpellCheckerKey = 'kk';
@@ -238,7 +238,7 @@ describe('spellCheckerProvider', () => {
 
       expect(calls[0][2].spellCheck('boo')).to.be.true;
 
-      (process as any).type = oldType;
+      process.type = oldType;
     });
 
     it('should not throw when key is not valid', () => {
@@ -435,8 +435,8 @@ describe('spellCheckerProvider', () => {
     });
 
     it('should attach into webframe', () => {
-      const oldType = (process as any).type;
-      (process as any).type = 'renderer';
+      const oldType = process.type;
+      process.type = 'renderer';
 
       const provider = createProvider();
       (provider as any).spellCheckerTable = {
@@ -459,12 +459,12 @@ describe('spellCheckerProvider', () => {
       expect(spellMock.mock.calls).to.have.lengthOf(1);
       expect(spellMock.mock.calls[0]).to.deep.equal(['boo']);
 
-      (process as any).type = oldType;
+      process.type = oldType;
     });
 
     it('should attach into webframe with verbose log', () => {
-      const oldType = (process as any).type;
-      (process as any).type = 'renderer';
+      const oldType = process.type;
+      process.type = 'renderer';
 
       const provider = createProvider();
       provider.verboseLog = true;
@@ -488,7 +488,7 @@ describe('spellCheckerProvider', () => {
       expect(spellMock.mock.calls).to.have.lengthOf(1);
       expect(spellMock.mock.calls[0]).to.deep.equal(['boo']);
 
-      (process as any).type = oldType;
+      process.type = oldType;
     });
   });
 });

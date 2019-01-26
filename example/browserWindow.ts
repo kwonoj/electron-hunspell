@@ -1,12 +1,21 @@
+import { ENVIRONMENT } from 'hunspell-asm';
 import * as path from 'path';
-import { enableLogger, SpellCheckerProvider } from '../src/index';
+import { createProvider, enableLogger } from '../src/index';
 
 enableLogger(console);
 
 const init = async () => {
-  const browserWindowProvider = new SpellCheckerProvider();
+  const browserWindowProvider = createProvider();
   (window as any).browserWindowProvider = browserWindowProvider;
-  await browserWindowProvider.initialize();
+  await browserWindowProvider.initialize({
+    environment: ENVIRONMENT.NODE,
+    locateBinary: file => {
+      if (file.endsWith('.wasm')) {
+        return path.resolve('../node_modules/hunspell-asm/dist/cjs/lib/hunspell.wasm');
+      }
+      return file;
+    }
+  });
 
   await browserWindowProvider.loadDictionary(
     'en',

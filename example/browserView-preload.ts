@@ -1,13 +1,14 @@
+import { ENVIRONMENT } from 'hunspell-asm';
 import * as path from 'path';
-import { enableLogger, SpellCheckerProvider } from '../src/index';
+import { createAsmProvider, enableLogger } from '../src/index';
 
 enableLogger(console);
 
 const init = async () => {
-  const browserViewProvider = new SpellCheckerProvider();
+  const browserViewProvider = createAsmProvider();
 
   (window as any).browserViewProvider = browserViewProvider;
-  await browserViewProvider.initialize();
+  await browserViewProvider.initialize({ environment: ENVIRONMENT.NODE });
 
   await browserViewProvider.loadDictionary(
     'en',
