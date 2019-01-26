@@ -13,9 +13,9 @@ const setContextMenuEventHandler = (wnd: Electron.BrowserView | Electron.Browser
     } else if (!p.misspelledWord || p.misspelledWord.length < 1) {
       menu.append(new MenuItem({ label: 'no spelling correction suggestion' }));
     } else {
-      const code = `window.${process.env.ENTRY === 'browserWindow'
-        ? 'browserWindowProvider'
-        : 'browserViewProvider'}.getSuggestion(\`${p.misspelledWord}\`)`;
+      const code = `window.${
+        process.env.ENTRY === 'browserWindow' ? 'browserWindowProvider' : 'browserViewProvider'
+      }.getSuggestion(\`${p.misspelledWord}\`)`;
       const suggestion = await wnd!.webContents.executeJavaScript(code);
       suggestion.forEach((value: string) => {
         let item = new MenuItem({
@@ -27,7 +27,7 @@ const setContextMenuEventHandler = (wnd: Electron.BrowserView | Electron.Browser
       });
     }
 
-    menu.popup(mainWindow!, { async: true });
+    menu.popup({ window: mainWindow! });
   });
 };
 
@@ -51,7 +51,7 @@ app.on('ready', () => {
   if (process.env.ENTRY === 'browserView') {
     const view = new BrowserView({
       webPreferences: {
-        nodeIntegration: false,
+        nodeIntegration: true,
         preload: require.resolve('./browserView-preload')
       }
     });
