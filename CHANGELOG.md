@@ -1,3 +1,13 @@
+<a name="1.0.0-beta.2"></a>
+# [1.0.0-beta.2](https://github.com/kwonoj/electron-hunspell/compare/v1.0.0-beta.1...v1.0.0-beta.2) (2019-01-26)
+
+
+### Bug Fixes
+
+* **hunspell:** enable tree shaking ([48fef98](https://github.com/kwonoj/electron-hunspell/commit/48fef98))
+
+
+
 <a name="1.0.0-beta.1"></a>
 # [1.0.0-beta.1](https://github.com/kwonoj/electron-hunspell/compare/v0.1.1...v1.0.0-beta.1) (2019-01-26)
 
