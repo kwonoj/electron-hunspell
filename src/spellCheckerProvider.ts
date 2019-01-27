@@ -1,4 +1,4 @@
-import { Hunspell, HunspellFactory } from 'hunspell-asm';
+import { Hunspell, HunspellFactory, loadModule } from 'hunspell-asm';
 import * as path from 'path';
 import * as unixify from 'unixify';
 import { log } from './util/logger';
@@ -66,14 +66,6 @@ class SpellCheckerProvider {
   private currentSpellCheckerStartTime: number = Number.NEGATIVE_INFINITY;
 
   /**
-   * Ctor requires to supply module loader instead of directly load,
-   * to allow tree shaking works between wasm / asm binary from factory function.
-   *
-   * @param loadModule module loader for hunspell-asm.
-   */
-  constructor(private readonly loadModule: typeof import('hunspell-asm').loadModule) {}
-
-  /**
    * Initialize provider.
    *
    */
@@ -83,7 +75,7 @@ class SpellCheckerProvider {
     }
 
     log.info(`loadAsmModule: loading hunspell-asm module`);
-    this.hunspellFactory = await this.loadModule(initOptions);
+    this.hunspellFactory = await loadModule(initOptions);
     log.info(`loadAsmModule: asm module loaded successfully`);
   }
 
