@@ -28,15 +28,13 @@ npm install electron-hunspell
 
 ## Creating spellchecker provider
 
-`electron-hunspell` exposes `createProvider`, factory function to create class manage spellchecker instance for several dictionaries.
+`electron-hunspell` exposes `SpellCheckerProvider`, class to manage spellchecker instance for several dictionaries.
 
 ```typescript
-import { createProvider, createAsmProvider } from 'electron-hunspell';
+import { SpellCheckerProvider } from 'electron-hunspell';
 
-const provider = createProvider();
+const provider = new SpellCheckerProvider();
 await provider.initialize();
-
-const asm = createAsmProvider(); //create provider with fallback asm.js binary
 ```
 
 `initialize` accepts options to pass into `hunspell-asm` binary if needed.
