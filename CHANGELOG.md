@@ -1,3 +1,13 @@
+<a name="1.0.0-beta.3"></a>
+# [1.0.0-beta.3](https://github.com/kwonoj/electron-hunspell/compare/v1.0.0-beta.2...v1.0.0-beta.3) (2019-01-27)
+
+
+### Features
+
+* **createprovider:** deprecate provider factory ([80776e8](https://github.com/kwonoj/electron-hunspell/commit/80776e8))
+
+
+
 <a name="1.0.0-beta.2"></a>
 # [1.0.0-beta.2](https://github.com/kwonoj/electron-hunspell/compare/v1.0.0-beta.1...v1.0.0-beta.2) (2019-01-26)
 
