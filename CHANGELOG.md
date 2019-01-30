@@ -1,3 +1,13 @@
+<a name="1.0.0-beta.4"></a>
+# [1.0.0-beta.4](https://github.com/kwonoj/electron-hunspell/compare/v1.0.0-beta.3...v1.0.0-beta.4) (2019-01-30)
+
+
+### Features
+
+* **hunspell:** back to single file binary ([0df2356](https://github.com/kwonoj/electron-hunspell/commit/0df2356))
+
+
+
 <a name="1.0.0-beta.3"></a>
 # [1.0.0-beta.3](https://github.com/kwonoj/electron-hunspell/compare/v1.0.0-beta.2...v1.0.0-beta.3) (2019-01-27)
 
