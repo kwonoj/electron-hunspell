@@ -1,3 +1,13 @@
+<a name="1.0.0-beta.5"></a>
+# [1.0.0-beta.5](https://github.com/kwonoj/electron-hunspell/compare/v1.0.0-beta.4...v1.0.0-beta.5) (2019-01-31)
+
+
+### Bug Fixes
+
+* **hunspell:** bump up hunspell-asm for leak ([6faa44a](https://github.com/kwonoj/electron-hunspell/commit/6faa44a))
+
+
+
 <a name="1.0.0-beta.4"></a>
 # [1.0.0-beta.4](https://github.com/kwonoj/electron-hunspell/compare/v1.0.0-beta.3...v1.0.0-beta.4) (2019-01-30)
 
