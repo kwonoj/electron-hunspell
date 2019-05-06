@@ -18,10 +18,10 @@ module.exports = wallaby => ({
 
   preprocessors: {
     '**/*.js?(x)': file =>
-      require('babel-core').transform(file.content, {
-        sourceMap: true,
+      require('@babel/core').transform(file.content, {
+        sourceMaps: true,
         filename: file.path,
-        presets: ['babel-preset-jest']
+        presets: [require('babel-preset-jest')]
       })
   }
 });
