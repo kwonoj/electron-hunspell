@@ -190,30 +190,6 @@ describe('spellCheckerProvider', () => {
       expect(provider.availableDictionaries).to.deep.equal(['kk']);
       expect(provider.selectedDictionary).to.be.null;
     });
-
-    it('should load file dictionary', async () => {
-      const mockMountDirectory = jest.fn(x => x);
-      const mockCreate = jest.fn();
-
-      const loadModuleMock = loadModule as jest.Mock<any>;
-      loadModuleMock.mockImplementationOnce(() => ({
-        mountDirectory: mockMountDirectory,
-        create: mockCreate
-      }));
-
-      const provider = new SpellCheckerProvider();
-      await provider.initialize();
-
-      await provider.loadDictionary('xx', '/x/a.dic', '/y/a.aff');
-      expect(mockMountDirectory.mock.calls).to.have.lengthOf(2);
-      expect(mockMountDirectory.mock.calls).to.deep.equal([['/y'], ['/x']]);
-
-      expect(mockCreate.mock.calls).to.have.lengthOf(1);
-      expect(mockCreate.mock.calls).to.deep.equal([['/y/a.aff', '/x/a.dic']]);
-
-      expect(provider.availableDictionaries).to.deep.equal(['xx']);
-      expect(provider.selectedDictionary).to.be.null;
-    });
   });
 
   describe('unloadDictionary', () => {
@@ -283,91 +259,6 @@ describe('spellCheckerProvider', () => {
 
       expect(mockUnmount.mock.calls).to.have.lengthOf(2);
       expect(mockChecker.dispose.mock.calls).to.have.lengthOf(1);
-    });
-
-    it('should unmount directory if refcount cleared', async () => {
-      const mockChecker = { dispose: jest.fn() };
-      const mockCreate = jest.fn(() => mockChecker);
-      const mockMountDirectory = jest.fn(x => x);
-      const mockUnmount = jest.fn();
-
-      const loadModuleMock = loadModule as jest.Mock<any>;
-      loadModuleMock.mockImplementationOnce(() => ({
-        mountDirectory: mockMountDirectory,
-        create: mockCreate,
-        unmount: mockUnmount
-      }));
-
-      const provider = new SpellCheckerProvider();
-      await provider.initialize();
-
-      await provider.loadDictionary('kk', '/x/a.dic', '/x/a.aff');
-
-      expect((provider as any).fileMountRefCount).to.deep.equal({ '/x': 2 });
-      provider.unloadDictionary('kk');
-
-      expect(mockUnmount.mock.calls).to.have.lengthOf(1);
-      expect((provider as any).fileMountRefCount).to.be.empty;
-    });
-
-    it('should not throw while decrease refcount for zero refs', async () => {
-      const mockChecker = { dispose: jest.fn() };
-      const mockCreate = jest.fn(() => mockChecker);
-      const mockMountDirectory = jest.fn(x => x);
-      const mockUnmount = jest.fn();
-
-      const loadModuleMock = loadModule as jest.Mock<any>;
-      loadModuleMock.mockImplementationOnce(() => ({
-        mountDirectory: mockMountDirectory,
-        create: mockCreate,
-        unmount: mockUnmount
-      }));
-
-      const provider = new SpellCheckerProvider();
-      await provider.initialize();
-
-      await provider.loadDictionary('kk', '/y/a.dic', '/x/a.aff');
-
-      expect((provider as any).fileMountRefCount).to.deep.equal({ '/x': 1, '/y': 1 });
-
-      //augment refcount to zero
-      (provider as any).fileMountRefCount['/x'] = 0;
-      provider.unloadDictionary('kk');
-
-      expect(mockUnmount.mock.calls).to.have.lengthOf(2);
-      expect((provider as any).fileMountRefCount).to.be.empty;
-    });
-
-    it('should decrease refcount file dictionary if mounted path have another dictionary', async () => {
-      const mockChecker = { dispose: jest.fn() };
-      const mockCreate = jest.fn(() => mockChecker);
-      const mockMountDirectory = jest.fn(x => x);
-      const mockUnmount = jest.fn();
-
-      const loadModuleMock = loadModule as jest.Mock<any>;
-      loadModuleMock.mockImplementationOnce(() => ({
-        mountDirectory: mockMountDirectory,
-        create: mockCreate,
-        unmount: mockUnmount
-      }));
-
-      const provider = new SpellCheckerProvider();
-      await provider.initialize();
-
-      await provider.loadDictionary('kk', '/x/a.dic', '/x/a.aff');
-      await provider.loadDictionary('xx', '/x/y.dic', '/x/y.aff');
-
-      expect((provider as any).fileMountRefCount).to.deep.equal({ '/x': 4 });
-
-      provider.unloadDictionary('kk');
-
-      expect(mockUnmount.mock.calls).to.have.lengthOf(0);
-      expect((provider as any).fileMountRefCount).to.deep.equal({ '/x': 2 });
-
-      provider.unloadDictionary('xx');
-
-      expect(mockUnmount.mock.calls).to.have.lengthOf(1);
-      expect((provider as any).fileMountRefCount).to.be.empty;
     });
   });
 

@@ -1,6 +1,4 @@
 import { Hunspell, HunspellFactory, loadModule } from 'hunspell-asm';
-import * as path from 'path';
-import * as unixify from 'unixify';
 import { log } from './util/logger';
 
 /**
@@ -54,14 +52,6 @@ class SpellCheckerProvider {
   public set verboseLog(value: boolean) {
     this._verboseLog = value;
   }
-
-  /**
-   * Holds ref count of physical mount path to unmount only there isn't ref anymore.
-   * multiple aff / dic can be placed under single directory, which will create single directory mount point -
-   * unmonuting it immediately will makes other dictionary unavailable. Instead, counts ref and only unmount when
-   * last dictionary unmounted.
-   */
-  private fileMountRefCount = {};
 
   private currentSpellCheckerStartTime: number = Number.NEGATIVE_INFINITY;
 
@@ -132,59 +122,57 @@ class SpellCheckerProvider {
 
   /**
    * Load specified dictionary into memory, creates hunspell instance for corresponding locale key.
-   * @param {string} key Locale key for spell checker instance.
-   * @param {string | ArrayBufferView} dicPath Path to physical dictionary, or ArrayBufferView content.
-   * @param {string | ArrayBufferView} affPath Path to physical affix, or ArrayBufferView content.
+   * @param {string} languageKey Locale key for spell checker instance.
+   * @param {ArrayBufferView} ArrayBufferView for dictionary content.
+   * @param {ArrayBufferView} ArrayBufferView for affix content.
    * @returns {Promise<void>} Indication to load completes.
    */
-  public async loadDictionary(key: string, dicPath: string, affPath: string): Promise<void>;
-  public async loadDictionary(key: string, dicBuffer: ArrayBufferView, affBuffer: ArrayBufferView): Promise<void>;
   public async loadDictionary(
-    key: string,
-    dic: string | ArrayBufferView,
-    aff: string | ArrayBufferView
+    languageKey: string,
+    dicBuffer: ArrayBufferView,
+    affBuffer: ArrayBufferView
   ): Promise<void> {
-    if (!key || !!this.spellCheckerTable[key]) {
-      throw new Error(`Invalid key: ${!!key ? 'already registered key' : 'key is empty'}`);
+    if (!languageKey || !!this.spellCheckerTable[languageKey]) {
+      throw new Error(`Invalid key: ${!!languageKey ? 'already registered key' : 'key is empty'}`);
     }
 
-    const isBufferDictionary = ArrayBuffer.isView(dic) && ArrayBuffer.isView(aff);
-    const isFileDictionary = typeof dic === 'string' && typeof aff === 'string';
+    const isBufferDictionary = ArrayBuffer.isView(dicBuffer) && ArrayBuffer.isView(affBuffer);
 
-    if (!isBufferDictionary && !isFileDictionary) {
+    if (!isBufferDictionary) {
       throw new Error('Cannot load dictionary for given parameters');
     }
 
-    const mounted = isBufferDictionary
-      ? this.mountBufferDictionary(dic as ArrayBufferView, aff as ArrayBufferView)
-      : this.mountFileDictionary(dic as string, aff as string);
-
-    this.assignSpellchecker(key, mounted);
+    const factory = this.hunspellFactory;
+    this.createSpllcheckerInstanceForLanguage(
+      languageKey,
+      factory.mountBuffer(affBuffer),
+      factory.mountBuffer(dicBuffer)
+    );
   }
 
   /**
    * Dispose given spell checker instance and unload dictionary from memory.
-   * @param {string} key Locale key for spell checker instance.
+   * @param {string} languageKey Locale key for spell checker instance.
    */
-  public unloadDictionary(key: string): void {
-    if (!key || !this.spellCheckerTable[key]) {
+  public unloadDictionary(languageKey: string): void {
+    if (!languageKey || !this.spellCheckerTable[languageKey]) {
       log.info(`unloadDictionary: not able to find corresponding spellchecker for given key`);
       return;
     }
 
-    if (!!this._currentSpellCheckerKey && this._currentSpellCheckerKey === key) {
+    if (!!this._currentSpellCheckerKey && this._currentSpellCheckerKey === languageKey) {
       this._currentSpellCheckerKey = null;
       this.currentSpellCheckerStartTime = Number.NEGATIVE_INFINITY;
 
       log.warn(`unloadDictionary: unload dictionary for current spellchecker instance`);
-      this.setProvider(key, () => true);
+      this.setProvider(languageKey, () => true);
     }
 
-    const dict = this.spellCheckerTable[key];
+    const dict = this.spellCheckerTable[languageKey];
     dict.dispose();
 
-    delete this.spellCheckerTable[key];
-    log.info(`unloadDictionary: dictionary for '${key}' is unloaded`);
+    delete this.spellCheckerTable[languageKey];
+    log.info(`unloadDictionary: dictionary for '${languageKey}' is unloaded`);
   }
 
   private attach(key: string): void {
@@ -212,94 +200,32 @@ class SpellCheckerProvider {
     webFrame.setSpellCheckProvider(key, true, { spellCheck: provider });
   }
 
-  private mountBufferDictionary(dicBuffer: ArrayBufferView, affBuffer: ArrayBufferView) {
+  /**
+   * Create hunspell-asm instance, assign into inner table for lookup.
+   */
+  private createSpllcheckerInstanceForLanguage(languageKey: string, affMountPath: string, dicMountPath: string) {
     const factory = this.hunspellFactory;
+    const spellChecker = factory.create(affMountPath, dicMountPath);
 
-    return {
-      affPath: factory.mountBuffer(affBuffer),
-      dicPath: factory.mountBuffer(dicBuffer),
-      buffer: true
-    };
-  }
-
-  private mountFileDictionary(dicFilePath: string, affFilePath: string) {
-    const factory = this.hunspellFactory;
-
-    const getMountedPath = (filePath: string) => {
-      const mountedDir = factory.mountDirectory(path.dirname(filePath));
-      return unixify(path.join(mountedDir, path.basename(filePath)));
-    };
-
-    return {
-      affPath: getMountedPath(affFilePath),
-      dicPath: getMountedPath(dicFilePath),
-      buffer: false
-    };
-  }
-
-  private assignSpellchecker(
-    key: string,
-    { buffer, affPath, dicPath }: { buffer: boolean; affPath: string; dicPath: string }
-  ) {
-    const factory = this.hunspellFactory;
-    const spellChecker = factory.create(affPath, dicPath);
-
-    const increaseRefCount = (filePath: string) => {
-      const dir = path.dirname(filePath);
-      this.fileMountRefCount[dir] = !!this.fileMountRefCount[dir] ? this.fileMountRefCount[dir] + 1 : 1;
-
-      log.debug(`increaseRefCount: refCount set for '${dir}' to '${this.fileMountRefCount[dir]}'`);
-    };
-
-    const decreaseRefCount = (filePath: string) => {
-      const dir = path.dirname(filePath);
-      if (this.fileMountRefCount[dir] > 0) {
-        this.fileMountRefCount[dir] -= 1;
-      }
-
-      if (this.fileMountRefCount[dir] === 0) {
-        delete this.fileMountRefCount[dir];
-      }
-
-      const refCount = !!this.fileMountRefCount[dir] ? this.fileMountRefCount[dir] : 0;
-
-      log.debug(`decreaseRefCount: refCount set for '${dir}' to '${refCount}'`);
-      return refCount;
-    };
-
-    if (!buffer) {
-      increaseRefCount(affPath);
-      increaseRefCount(dicPath);
-    }
-
-    const unmountFile = () => {
-      const paths = [affPath, dicPath];
-      paths.forEach(p => {
-        const ref = decreaseRefCount(p);
-        if (ref === 0) {
-          factory.unmount(path.dirname(p));
-        }
-      });
+    /**
+     * Unmount virtual file created from arraybuffer, dispose spellchecker instance
+     */
+    const dispose = () => {
+      factory.unmount(affMountPath);
+      factory.unmount(dicMountPath);
+      log.debug(`unmountBuffer: unmounted buffer `, affMountPath, dicMountPath);
 
       spellChecker.dispose();
+      log.debug(`unmountBuffer: disposed hunspell instance for `, languageKey);
     };
 
-    const unmountBuffer = () => {
-      factory.unmount(affPath);
-      factory.unmount(dicPath);
-      log.debug(`unmountBuffer: unmounted buffer `, affPath, dicPath);
-
-      spellChecker.dispose();
-      log.debug(`unmountBuffer: disposed hunspell instance for `, key);
-    };
-
-    this.spellCheckerTable[key] = {
+    this.spellCheckerTable[languageKey] = {
       uptime: 0,
       spellChecker,
-      dispose: buffer ? unmountBuffer : unmountFile
+      dispose: dispose
     };
 
-    log.info(`assignSpellchecker: spellCheckerTable added new checker for '${key}'`);
+    log.info(`assignSpellchecker: spellCheckerTable added new checker for '${languageKey}'`);
   }
 }
 
