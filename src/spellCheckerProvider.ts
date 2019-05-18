@@ -156,7 +156,7 @@ class SpellCheckerProvider {
    */
   public unloadDictionary(languageKey: string): void {
     if (!languageKey || !this.spellCheckerTable[languageKey]) {
-      log.info(`unloadDictionary: not able to find corresponding spellchecker for given key`);
+      log.info(`unloadDictionary: not able to find corresponding spellchecker for given key '${languageKey}'`);
       return;
     }
 
@@ -165,7 +165,6 @@ class SpellCheckerProvider {
       this.currentSpellCheckerStartTime = Number.NEGATIVE_INFINITY;
 
       log.warn(`unloadDictionary: unload dictionary for current spellchecker instance`);
-      this.setProvider(languageKey, () => true);
     }
 
     const dict = this.spellCheckerTable[languageKey];
