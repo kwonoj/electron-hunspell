@@ -93,7 +93,6 @@ class SpellCheckerProvider {
 
     this.currentSpellCheckerStartTime = Date.now();
     this._currentSpellCheckerKey = key;
-    this.attach(key);
   }
 
   /**
@@ -172,31 +171,6 @@ class SpellCheckerProvider {
 
     delete this.spellCheckerTable[languageKey];
     log.info(`unloadDictionary: dictionary for '${languageKey}' is unloaded`);
-  }
-
-  private attach(key: string): void {
-    const checker = this.spellCheckerTable[key];
-
-    const provider = (text: string) => {
-      const ret = checker.spellChecker.spell(text);
-      if (this._verboseLog) {
-        log.debug(`spellChecker: checking spell for '${text}' with '${key}' returned`, ret);
-      }
-      return ret;
-    };
-    this.setProvider(key, provider);
-  }
-
-  private setProvider(key: string, provider: (text: string) => boolean): void {
-    const webFrame: typeof import('electron').webFrame | null =
-      process.type === 'renderer' ? require('electron').webFrame : null; //tslint:disable-line:no-var-requires no-require-imports
-
-    if (!webFrame) {
-      log.warn(`attach: Cannot lookup webFrame to set spell checker provider`);
-      return;
-    }
-
-    webFrame.setSpellCheckProvider(key, true, { spellCheck: provider });
   }
 
   /**
