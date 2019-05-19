@@ -8,11 +8,9 @@
     "strictNullChecks": true,
     "noUnusedLocals": true,
     "noImplicitThis": true,
-    "noEmitHelpers": true,
     "noUnusedParameters": true,
     "module": "commonjs",
     "moduleResolution": "node",
-    "importHelpers": true,
     "target": "es5",
     "noEmit": true,
     "lib": [

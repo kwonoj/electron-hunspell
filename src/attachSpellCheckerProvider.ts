@@ -1,5 +1,3 @@
-import { log } from './util/logger';
-
 /**
  * Interface to spell checker provider proxy can be accessed from renderer process.
  * `attachSpellCheckProvider` will use this proxy to communicate to actual provider.
@@ -45,7 +43,9 @@ const attachSpellCheckProvider = async (providerProxy: ProviderProxy) => {
 
         completionCallback(spellCheckResult.filter((word => !!word) as (w: any) => w is string));
       } catch (error) {
-        log.error(`spellCheckerCallback: unexpected error occurred ${error.message}`, error);
+        //tslint:disable-next-line:no-console
+        console.error(`spellCheckerCallback: unexpected error occurred ${error.message}`, error);
+        completionCallback([]);
       }
     }
   };
