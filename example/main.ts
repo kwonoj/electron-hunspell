@@ -38,7 +38,12 @@ app.on('window-all-closed', () => {
 app.on('ready', () => {
   mainWindow = new BrowserWindow({
     width: 1024,
-    height: 768
+    height: 768,
+    //nodeIntegration is enabled only for simple example. do not follow this in production.
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false
+    }
   });
 
   mainWindow.loadURL(`file://${__dirname}/${process.env.ENTRY}.html`);
@@ -50,8 +55,10 @@ app.on('ready', () => {
   //Example logic for browser view
   if (process.env.ENTRY === 'browserView') {
     const view = new BrowserView({
+      //nodeIntegration is enabled only for simple example. do not follow this in production.
       webPreferences: {
         nodeIntegration: true,
+        contextIsolation: false,
         preload: require.resolve('./browserView-preload')
       }
     });

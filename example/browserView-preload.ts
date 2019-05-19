@@ -1,6 +1,7 @@
+import * as fs from 'fs';
 import { ENVIRONMENT } from 'hunspell-asm';
 import * as path from 'path';
-import { enableLogger, SpellCheckerProvider } from '../src/index';
+import { attachSpellCheckProvider, enableLogger, SpellCheckerProvider } from '../src/index';
 
 enableLogger(console);
 
@@ -12,10 +13,13 @@ const init = async () => {
 
   await browserViewProvider.loadDictionary(
     'en',
-    path.join(path.resolve('./'), 'en-US.dic'),
-    path.join(path.resolve('./'), 'en-US.aff')
+    fs.readFileSync(path.join(path.resolve('./example'), 'en-US.dic')),
+    fs.readFileSync(path.join(path.resolve('./example'), 'en-US.aff'))
   );
-  setTimeout(async () => browserViewProvider.onSwitchLanguage('en'), 3000);
+
+  const attached = await attachSpellCheckProvider(browserViewProvider);
+
+  setTimeout(async () => attached.switchLanguage('en'), 3000);
 };
 
 init();
