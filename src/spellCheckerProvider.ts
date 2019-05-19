@@ -24,11 +24,14 @@ const sortBy = (key: string) => (a: object, b: object) => (a[key] > b[key] ? 1 :
 class SpellCheckerProvider {
   private hunspellFactory: HunspellFactory;
   private spellCheckerTable: { [x: string]: SpellChecker } = {};
+  private _currentSpellCheckerKey: string | null = null;
+  private currentSpellCheckerStartTime: number = Number.NEGATIVE_INFINITY;
+
   /**
    * Returns array of dictionary keys currently loaded.
    * Array is sorted by usage time of dictionary by descending order.
    */
-  public get availableDictionaries(): Readonly<Array<string>> {
+  public async getAvailableDictionaries(): Promise<Readonly<Array<string>>> {
     const array = Object.keys(this.spellCheckerTable).map(key => ({ key, uptime: this.spellCheckerTable[key].uptime }));
     //order by key `uptime`, then reverse to descending order
     return array
@@ -37,27 +40,15 @@ class SpellCheckerProvider {
       .map((v: { key: string }) => v.key);
   }
 
-  private _currentSpellCheckerKey: string | null = null;
   /**
    * Returns currently selected dictionary key.
    */
-  public get selectedDictionary(): string | null {
+  public async getSelectedDictionaryLanguage(): Promise<string | null> {
     return this._currentSpellCheckerKey;
   }
 
-  private _verboseLog: boolean = false;
-  /**
-   * Allow to emit more verbose log.
-   */
-  public set verboseLog(value: boolean) {
-    this._verboseLog = value;
-  }
-
-  private currentSpellCheckerStartTime: number = Number.NEGATIVE_INFINITY;
-
   /**
    * Initialize provider.
-   *
    */
   public async initialize(initOptions?: Parameters<typeof import('hunspell-asm').loadModule>[0]): Promise<void> {
     if (!!this.hunspellFactory) {
@@ -70,16 +61,19 @@ class SpellCheckerProvider {
   }
 
   /**
-   * Set current spell checker instance for given locale key then attach into current webFrame.
-   * @param {string} key Locale key for spell checker instance.
+   * Callback to be called by `attachSpellCheckerProvider` when requested to change
+   * webFrame's spellchecker language. This calback will set current spellchecker instance in
+   * provider to be used subsequent spell / suggestion request.
+   *
+   * @param {string} languageKey Locale key for spell checker instance.
    */
-  public switchDictionary(key: string): void {
-    if (!key || !this.spellCheckerTable[key]) {
-      throw new Error(`Spellchecker dictionary for ${key} is not available, ensure dictionary loaded`);
+  public async onSwitchLanguage(languageKey: string): Promise<void> {
+    if (!languageKey || !this.spellCheckerTable[languageKey]) {
+      throw new Error(`Spellchecker dictionary for ${languageKey} is not available, ensure dictionary loaded`);
     }
 
     log.info(
-      `switchDictionary: switching dictionary to check spell from '${this._currentSpellCheckerKey}' to '${key}'`
+      `switchDictionary: switching dictionary to check spell from '${this._currentSpellCheckerKey}' to '${languageKey}'`
     );
 
     if (Number.isInteger(this.currentSpellCheckerStartTime)) {
@@ -92,8 +86,16 @@ class SpellCheckerProvider {
     }
 
     this.currentSpellCheckerStartTime = Date.now();
-    this._currentSpellCheckerKey = key;
-    this.attach(key);
+    this._currentSpellCheckerKey = languageKey;
+  }
+
+  public async spell(text: string): Promise<boolean> {
+    const spellChecker = this.getSpellchecker();
+    if (!spellChecker) {
+      throw new Error('Not able to find spellchecker');
+    }
+
+    return spellChecker.spell(text);
   }
 
   /**
@@ -101,23 +103,13 @@ class SpellCheckerProvider {
    * @param {string} Text text to get suggstion.
    * @returns {Readonly<Array<string>>} Array of suggested values.
    */
-  public getSuggestion(text: string): Readonly<Array<string>> {
-    if (!this._currentSpellCheckerKey) {
-      log.warn(`getSuggestedWord: there isn't any spellchecker key, bailing`);
-      return [];
+  public async getSuggestion(text: string): Promise<Readonly<Array<string>>> {
+    const spellChecker = this.getSpellchecker();
+    if (!spellChecker) {
+      throw new Error('Not able to find spellchecker');
     }
 
-    const checker = this.spellCheckerTable[this._currentSpellCheckerKey];
-    if (!checker) {
-      log.error(`attach: There isn't corresponding dictionary for key '${this._currentSpellCheckerKey}'`);
-      return [];
-    }
-
-    const ret = checker.spellChecker.suggest(text);
-    if (this._verboseLog) {
-      log.debug(`getSuggestion: '${text}' got suggestions`, ret);
-    }
-    return ret;
+    return spellChecker.suggest(text);
   }
 
   /**
@@ -154,9 +146,9 @@ class SpellCheckerProvider {
    * Dispose given spell checker instance and unload dictionary from memory.
    * @param {string} languageKey Locale key for spell checker instance.
    */
-  public unloadDictionary(languageKey: string): void {
+  public async unloadDictionary(languageKey: string): Promise<void> {
     if (!languageKey || !this.spellCheckerTable[languageKey]) {
-      log.info(`unloadDictionary: not able to find corresponding spellchecker for given key`);
+      log.info(`unloadDictionary: not able to find corresponding spellchecker for given key '${languageKey}'`);
       return;
     }
 
@@ -165,7 +157,6 @@ class SpellCheckerProvider {
       this.currentSpellCheckerStartTime = Number.NEGATIVE_INFINITY;
 
       log.warn(`unloadDictionary: unload dictionary for current spellchecker instance`);
-      this.setProvider(languageKey, () => true);
     }
 
     const dict = this.spellCheckerTable[languageKey];
@@ -175,29 +166,19 @@ class SpellCheckerProvider {
     log.info(`unloadDictionary: dictionary for '${languageKey}' is unloaded`);
   }
 
-  private attach(key: string): void {
-    const checker = this.spellCheckerTable[key];
-
-    const provider = (text: string) => {
-      const ret = checker.spellChecker.spell(text);
-      if (this._verboseLog) {
-        log.debug(`spellChecker: checking spell for '${text}' with '${key}' returned`, ret);
-      }
-      return ret;
-    };
-    this.setProvider(key, provider);
-  }
-
-  private setProvider(key: string, provider: (text: string) => boolean): void {
-    const webFrame: typeof import('electron').webFrame | null =
-      process.type === 'renderer' ? require('electron').webFrame : null; //tslint:disable-line:no-var-requires no-require-imports
-
-    if (!webFrame) {
-      log.warn(`attach: Cannot lookup webFrame to set spell checker provider`);
-      return;
+  private getSpellchecker() {
+    if (!this._currentSpellCheckerKey) {
+      log.warn(`getSuggestedWord: there isn't any spellchecker key, bailing`);
+      return null;
     }
 
-    webFrame.setSpellCheckProvider(key, true, { spellCheck: provider });
+    const checker = this.spellCheckerTable[this._currentSpellCheckerKey];
+    if (!checker) {
+      log.error(`attach: There isn't corresponding dictionary for key '${this._currentSpellCheckerKey}'`);
+      return null;
+    }
+
+    return checker.spellChecker;
   }
 
   /**

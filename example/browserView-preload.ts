@@ -15,7 +15,7 @@ const init = async () => {
     path.join(path.resolve('./'), 'en-US.dic'),
     path.join(path.resolve('./'), 'en-US.aff')
   );
-  setTimeout(async () => browserViewProvider.switchDictionary('en'), 3000);
+  setTimeout(async () => browserViewProvider.onSwitchLanguage('en'), 3000);
 };
 
 init();

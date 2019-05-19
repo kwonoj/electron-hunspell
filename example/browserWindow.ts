@@ -23,7 +23,7 @@ const init = async () => {
     path.join(path.resolve('./'), 'en-US.aff')
   );
 
-  browserWindowProvider.switchDictionary('en');
+  browserWindowProvider.onSwitchLanguage('en');
 };
 
 init();
