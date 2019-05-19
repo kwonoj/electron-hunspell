@@ -30,7 +30,6 @@
   "files": [
     "main.ts",
     "browserWindow.ts",
-    "browserView-preload.ts",
-    "../src/ambient.d.ts"
+    "browserView-preload.ts"
   ]
 }
