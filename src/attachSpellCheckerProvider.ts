@@ -40,7 +40,7 @@ const attachSpellCheckProvider = async (providerProxy: ProviderProxy) => {
     spellCheck: async (words: Array<string>, completionCallback: (misspeltWords: string[]) => void) => {
       try {
         const spellCheckResult = await Promise.all(
-          words.map(word => providerProxy.spell(word).then(isCorrectSpell => (isCorrectSpell ? null : word)))
+          words.map(async word => ((await providerProxy.spell(word)) ? null : word))
         );
 
         completionCallback(spellCheckResult.filter((word => !!word) as (w: any) => w is string));
