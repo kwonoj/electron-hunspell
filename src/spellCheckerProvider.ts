@@ -69,17 +69,13 @@ class SpellCheckerProvider {
     log.info(`loadAsmModule: asm module loaded successfully`);
   }
 
-  /**
-   * Set current spell checker instance for given locale key then attach into current webFrame.
-   * @param {string} key Locale key for spell checker instance.
-   */
-  public switchDictionary(key: string): void {
-    if (!key || !this.spellCheckerTable[key]) {
-      throw new Error(`Spellchecker dictionary for ${key} is not available, ensure dictionary loaded`);
+  public onSwitchLanguage(languageKey: string): void {
+    if (!languageKey || !this.spellCheckerTable[languageKey]) {
+      throw new Error(`Spellchecker dictionary for ${languageKey} is not available, ensure dictionary loaded`);
     }
 
     log.info(
-      `switchDictionary: switching dictionary to check spell from '${this._currentSpellCheckerKey}' to '${key}'`
+      `switchDictionary: switching dictionary to check spell from '${this._currentSpellCheckerKey}' to '${languageKey}'`
     );
 
     if (Number.isInteger(this.currentSpellCheckerStartTime)) {
@@ -92,7 +88,7 @@ class SpellCheckerProvider {
     }
 
     this.currentSpellCheckerStartTime = Date.now();
-    this._currentSpellCheckerKey = key;
+    this._currentSpellCheckerKey = languageKey;
   }
 
   /**

@@ -1,7 +1,10 @@
 import { log } from './util/logger';
+
 interface ProviderProxy {
   spell: (languageKey: string, text: string) => Promise<boolean>;
   getSuggestion: (languageKey: string, text: string) => Promise<Readonly<Array<string>>>;
+  onSwitchLanguage: (languageKey: string) => Promise<void>;
+  getSelectedDictionaryLanguage: () => Promise<string | null>;
 }
 
 const attachSpellCheckProvider = async (providerProxy: ProviderProxy) => {
@@ -11,37 +14,40 @@ const attachSpellCheckProvider = async (providerProxy: ProviderProxy) => {
     throw new Error(`attach: Cannot lookup webFrame to set spell checker provider`);
   }
 
-  let currentLanguageKey: string | null = null;
-
   const spellCheckerCallback = {
-    spellCheck: (words: Array<string>, completionCallback: (misspeltWords: string[]) => void) => {
-      if (!currentLanguageKey) {
-        completionCallback([]);
-        return;
-      }
+    spellCheck: async (words: Array<string>, completionCallback: (misspeltWords: string[]) => void) => {
+      try {
+        const currentLanguageKey = await providerProxy.getSelectedDictionaryLanguage();
+        if (!currentLanguageKey) {
+          completionCallback([]);
+          return;
+        }
 
-      const wordsCheckSpell = words.map(word =>
-        providerProxy.spell(currentLanguageKey!, word).then(isCorrectSpell => (isCorrectSpell ? null : word))
-      );
-      Promise.all(wordsCheckSpell).then(
-        results => completionCallback(results.filter((word => !!word) as (w: any) => w is string)),
-        error => log.error(`spellCheckerCallback: failed to check spell`, error)
-      );
+        const spellCheckResult = await Promise.all(
+          words.map(word =>
+            providerProxy.spell(currentLanguageKey!, word).then(isCorrectSpell => (isCorrectSpell ? null : word))
+          )
+        );
+
+        completionCallback(spellCheckResult.filter((word => !!word) as (w: any) => w is string));
+      } catch (error) {
+        log.error(`spellCheckerCallback: unexpected error occurred ${error.message}`, error);
+      }
     }
   };
 
   return {
     switchLanguage: (languageKey: string) => {
-      currentLanguageKey = languageKey;
-      webFrame.setSpellCheckProvider(currentLanguageKey, spellCheckerCallback);
+      webFrame.setSpellCheckProvider(languageKey, spellCheckerCallback);
+      return providerProxy.onSwitchLanguage(languageKey);
     },
 
-    unsubscribe: () => {
+    unsubscribe: async () => {
+      const currentLanguageKey = await providerProxy.getSelectedDictionaryLanguage();
       if (currentLanguageKey) {
         webFrame.setSpellCheckProvider(currentLanguageKey, {
           spellCheck: (_, cb) => cb([])
         });
-        currentLanguageKey = null;
       }
     }
   };

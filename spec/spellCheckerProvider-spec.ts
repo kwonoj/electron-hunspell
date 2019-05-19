@@ -266,7 +266,7 @@ describe('spellCheckerProvider', () => {
     it('should throw if dictionary is not available', () => {
       const provider = new SpellCheckerProvider();
 
-      expect(() => provider.switchDictionary('k')).to.throw();
+      expect(() => provider.onSwitchLanguage('k')).to.throw();
     });
 
     it('should log uptime if current dictionary exists', () => {
@@ -281,7 +281,7 @@ describe('spellCheckerProvider', () => {
       };
       Date.now = jest.fn(() => 100);
 
-      provider.switchDictionary('ll');
+      provider.onSwitchLanguage('ll');
       const uptime = (provider as any).spellCheckerTable['kk'].uptime;
       expect(uptime).to.equal(95); //100 - 10 + 5
       Date.now = _now;
@@ -298,7 +298,7 @@ describe('spellCheckerProvider', () => {
       };
       Date.now = jest.fn(() => 100);
 
-      provider.switchDictionary('ll');
+      provider.onSwitchLanguage('ll');
       const uptime = (provider as any).spellCheckerTable['kk'].uptime;
       expect(uptime).to.equal(5);
       Date.now = _now;
@@ -311,7 +311,7 @@ describe('spellCheckerProvider', () => {
       };
 
       expect((provider as any).currentSpellCheckerStartTime).to.equal(Number.NEGATIVE_INFINITY);
-      provider.switchDictionary('ll');
+      provider.onSwitchLanguage('ll');
 
       expect((provider as any).currentSpellCheckerStartTime).to.be.greaterThan(0);
     });
@@ -322,7 +322,7 @@ describe('spellCheckerProvider', () => {
         ll: {}
       };
 
-      expect(() => provider.switchDictionary('ll')).to.not.throw();
+      expect(() => provider.onSwitchLanguage('ll')).to.not.throw();
     });
 
     it('should attach into webframe', () => {
@@ -338,7 +338,7 @@ describe('spellCheckerProvider', () => {
         }
       };
 
-      provider.switchDictionary('ll');
+      provider.onSwitchLanguage('ll');
       expect(provider.selectedDictionary).to.equal('ll');
       const calls = (webFrame.setSpellCheckProvider as jest.Mock<any>).mock.calls;
       expect(calls).to.have.lengthOf(1);
@@ -367,7 +367,7 @@ describe('spellCheckerProvider', () => {
         }
       };
 
-      provider.switchDictionary('ll');
+      provider.onSwitchLanguage('ll');
       expect(provider.selectedDictionary).to.equal('ll');
       const calls = (webFrame.setSpellCheckProvider as jest.Mock<any>).mock.calls;
       expect(calls).to.have.lengthOf(1);
