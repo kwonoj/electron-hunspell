@@ -1,8 +1,8 @@
 import { log } from './util/logger';
 
 interface ProviderProxy {
-  spell: (languageKey: string, text: string) => Promise<boolean>;
-  getSuggestion: (languageKey: string, text: string) => Promise<Readonly<Array<string>>>;
+  spell: (text: string) => Promise<boolean>;
+  getSuggestion: (text: string) => Promise<Readonly<Array<string>>>;
   onSwitchLanguage: (languageKey: string) => Promise<void>;
   getSelectedDictionaryLanguage: () => Promise<string | null>;
 }
@@ -17,16 +17,8 @@ const attachSpellCheckProvider = async (providerProxy: ProviderProxy) => {
   const spellCheckerCallback = {
     spellCheck: async (words: Array<string>, completionCallback: (misspeltWords: string[]) => void) => {
       try {
-        const currentLanguageKey = await providerProxy.getSelectedDictionaryLanguage();
-        if (!currentLanguageKey) {
-          completionCallback([]);
-          return;
-        }
-
         const spellCheckResult = await Promise.all(
-          words.map(word =>
-            providerProxy.spell(currentLanguageKey!, word).then(isCorrectSpell => (isCorrectSpell ? null : word))
-          )
+          words.map(word => providerProxy.spell(word).then(isCorrectSpell => (isCorrectSpell ? null : word)))
         );
 
         completionCallback(spellCheckResult.filter((word => !!word) as (w: any) => w is string));
