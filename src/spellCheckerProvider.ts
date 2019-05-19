@@ -60,6 +60,13 @@ class SpellCheckerProvider {
     log.info(`loadAsmModule: asm module loaded successfully`);
   }
 
+  /**
+   * Callback to be called by `attachSpellCheckerProvider` when requested to change
+   * webFrame's spellchecker language. This calback will set current spellchecker instance in
+   * provider to be used subsequent spell / suggestion request.
+   *
+   * @param {string} languageKey Locale key for spell checker instance.
+   */
   public async onSwitchLanguage(languageKey: string): Promise<void> {
     if (!languageKey || !this.spellCheckerTable[languageKey]) {
       throw new Error(`Spellchecker dictionary for ${languageKey} is not available, ensure dictionary loaded`);
