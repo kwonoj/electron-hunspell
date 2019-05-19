@@ -30,6 +30,8 @@
   "files": [
     "main.ts",
     "browserWindow.ts",
-    "browserView-preload.ts"
+    "browserView-preload.ts",
+    "worker-main.ts",
+    "worker-preload.ts"
   ]
 }
