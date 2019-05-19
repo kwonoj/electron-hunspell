@@ -24,11 +24,14 @@ const sortBy = (key: string) => (a: object, b: object) => (a[key] > b[key] ? 1 :
 class SpellCheckerProvider {
   private hunspellFactory: HunspellFactory;
   private spellCheckerTable: { [x: string]: SpellChecker } = {};
+  private _currentSpellCheckerKey: string | null = null;
+  private currentSpellCheckerStartTime: number = Number.NEGATIVE_INFINITY;
+
   /**
    * Returns array of dictionary keys currently loaded.
    * Array is sorted by usage time of dictionary by descending order.
    */
-  public get availableDictionaries(): Readonly<Array<string>> {
+  public async getAvailableDictionaries(): Promise<Readonly<Array<string>>> {
     const array = Object.keys(this.spellCheckerTable).map(key => ({ key, uptime: this.spellCheckerTable[key].uptime }));
     //order by key `uptime`, then reverse to descending order
     return array
@@ -37,27 +40,15 @@ class SpellCheckerProvider {
       .map((v: { key: string }) => v.key);
   }
 
-  private _currentSpellCheckerKey: string | null = null;
   /**
    * Returns currently selected dictionary key.
    */
-  public get selectedDictionary(): string | null {
+  public async getSelectedDictionaryLanguage(): Promise<string | null> {
     return this._currentSpellCheckerKey;
   }
 
-  private _verboseLog: boolean = false;
-  /**
-   * Allow to emit more verbose log.
-   */
-  public set verboseLog(value: boolean) {
-    this._verboseLog = value;
-  }
-
-  private currentSpellCheckerStartTime: number = Number.NEGATIVE_INFINITY;
-
   /**
    * Initialize provider.
-   *
    */
   public async initialize(initOptions?: Parameters<typeof import('hunspell-asm').loadModule>[0]): Promise<void> {
     if (!!this.hunspellFactory) {
@@ -69,7 +60,7 @@ class SpellCheckerProvider {
     log.info(`loadAsmModule: asm module loaded successfully`);
   }
 
-  public onSwitchLanguage(languageKey: string): void {
+  public async onSwitchLanguage(languageKey: string): Promise<void> {
     if (!languageKey || !this.spellCheckerTable[languageKey]) {
       throw new Error(`Spellchecker dictionary for ${languageKey} is not available, ensure dictionary loaded`);
     }
@@ -96,7 +87,7 @@ class SpellCheckerProvider {
    * @param {string} Text text to get suggstion.
    * @returns {Readonly<Array<string>>} Array of suggested values.
    */
-  public getSuggestion(text: string): Readonly<Array<string>> {
+  public async getSuggestion(text: string): Promise<Readonly<Array<string>>> {
     if (!this._currentSpellCheckerKey) {
       log.warn(`getSuggestedWord: there isn't any spellchecker key, bailing`);
       return [];
@@ -108,11 +99,7 @@ class SpellCheckerProvider {
       return [];
     }
 
-    const ret = checker.spellChecker.suggest(text);
-    if (this._verboseLog) {
-      log.debug(`getSuggestion: '${text}' got suggestions`, ret);
-    }
-    return ret;
+    return checker.spellChecker.suggest(text);
   }
 
   /**
@@ -149,7 +136,7 @@ class SpellCheckerProvider {
    * Dispose given spell checker instance and unload dictionary from memory.
    * @param {string} languageKey Locale key for spell checker instance.
    */
-  public unloadDictionary(languageKey: string): void {
+  public async unloadDictionary(languageKey: string): Promise<void> {
     if (!languageKey || !this.spellCheckerTable[languageKey]) {
       log.info(`unloadDictionary: not able to find corresponding spellchecker for given key '${languageKey}'`);
       return;
