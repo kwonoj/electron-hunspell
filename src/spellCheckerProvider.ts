@@ -82,24 +82,27 @@ class SpellCheckerProvider {
     this._currentSpellCheckerKey = languageKey;
   }
 
+  public async spell(text: string): Promise<boolean> {
+    const spellChecker = this.getSpellchecker();
+    if (!spellChecker) {
+      throw new Error('Not able to find spellchecker');
+    }
+
+    return spellChecker.spell(text);
+  }
+
   /**
    * Get suggestion for misspelled text.
    * @param {string} Text text to get suggstion.
    * @returns {Readonly<Array<string>>} Array of suggested values.
    */
   public async getSuggestion(text: string): Promise<Readonly<Array<string>>> {
-    if (!this._currentSpellCheckerKey) {
-      log.warn(`getSuggestedWord: there isn't any spellchecker key, bailing`);
-      return [];
+    const spellChecker = this.getSpellchecker();
+    if (!spellChecker) {
+      throw new Error('Not able to find spellchecker');
     }
 
-    const checker = this.spellCheckerTable[this._currentSpellCheckerKey];
-    if (!checker) {
-      log.error(`attach: There isn't corresponding dictionary for key '${this._currentSpellCheckerKey}'`);
-      return [];
-    }
-
-    return checker.spellChecker.suggest(text);
+    return spellChecker.suggest(text);
   }
 
   /**
@@ -154,6 +157,21 @@ class SpellCheckerProvider {
 
     delete this.spellCheckerTable[languageKey];
     log.info(`unloadDictionary: dictionary for '${languageKey}' is unloaded`);
+  }
+
+  private getSpellchecker() {
+    if (!this._currentSpellCheckerKey) {
+      log.warn(`getSuggestedWord: there isn't any spellchecker key, bailing`);
+      return null;
+    }
+
+    const checker = this.spellCheckerTable[this._currentSpellCheckerKey];
+    if (!checker) {
+      log.error(`attach: There isn't corresponding dictionary for key '${this._currentSpellCheckerKey}'`);
+      return null;
+    }
+
+    return checker.spellChecker;
   }
 
   /**
