@@ -3,20 +3,21 @@
 [![codecov](https://codecov.io/gh/kwonoj/electron-hunspell/branch/master/graph/badge.svg)](https://codecov.io/gh/kwonoj/electron-hunspell)
 [![npm](https://img.shields.io/npm/v/electron-hunspell.svg)](https://www.npmjs.com/package/electron-hunspell)
 [![node](https://img.shields.io/badge/node-=>4.0-blue.svg?style=flat)](https://www.npmjs.com/package/electron-hunspell)
-[![Greenkeeper badge](https://badges.greenkeeper.io/kwonoj/electron-hunspell.svg)](https://greenkeeper.io/)
 
 # Electron-hunspell
 
 `electron-hunspell` provides [`hunspell`](https://github.com/hunspell/hunspell) based spell checker to [`Electron`](https://electron.atom.io/) based applications with minimal, simple api. This module aims specific design goals compare to other spellchecker implementations
 
 - No native module dependencies
-- No platform specific, consistent behavior via hunspell
+- No platform specific code, consistent behavior via hunspell
 - Low level explicit api surface
 
 There are couple of modules to improve spell checking experiences via `electron-hunspell` to check out if you're interested
 
 - [`cld3-asm`](https://github.com/kwonoj/cld3-asm): Javascript bindings for google compact language detector v3
 - [`hunspell-dict-downloader`](https://github.com/kwonoj/hunspell-dict-downloader): Downloader for hunspell dict around several available locales
+
+From 1.0, `electron-hunspell` only supports electron@5 and above supports async spellchecker interface. For previous version of electron, use 0.x version.
 
 # Install
 
@@ -41,47 +42,36 @@ await provider.initialize();
 
 ```typescript
 initialize(initOptions?: Partial<{
-    timeout: number;
-    locateBinary: (filePath: string) => string | object;
-    environment?: ENVIRONMENT;
-  }>): Promise<void>;
+  timeout: number;
+  environment?: ENVIRONMENT;
+}>): Promise<void>;
 ```
 
 Once you have provider instance, you can manage each dictionary based on locale key.
 
 ```typescript
-await provider.loadDictionary('en', './en-US.dic', './en-US.aff');
+const aff = await (await fetch('https://unpkg.com/hunspell-dict-en-us@0.1.0/en-us.aff')).arrayBuffer();
+const dic = await (await fetch('https://unpkg.com/hunspell-dict-en-us@0.1.0/en-us.dic')).arrayBuffer();
+
+await provider.loadDictionary('en', new Uint8Array(dic), new Uint8Array(aff));
 ```
 
 `loadDictionary` creates spellchecker instance to corresponding locale key.
 
 ```typescript
-public loadDictionary(key: string, dicPath: string, affPath: string): Promise<void>;
 public loadDictionary(key: string, dicBuffer: ArrayBufferView, affBuffer: ArrayBufferView): Promise<void>;
 ```
-
-It also accepts overload of supplying `ArrayBufferView` for cases you're under environment download dictionary via `fetch` or similar manner and have object in memory.
-
-Once dictionary is loaded in provider instance, you can specify which dictionary to check spells.
-
-```typescript
-public switchDictionary(key: string): void
-```
-
-Note switching dictionary doesn't occur automatically, it should be called explicitly as needed.
 
 When dictionary is no longer needed it should be manually disposed via `unloadDictionary` interface.
 
 ```typescript
-public unloadDictionary(key: string): void
+public unloadDictionary(key: string): Promise<void>
 ```
-
-If given key is currently selected spellchecker instance, unload will dispose dictionary as well as clear currently selected spellchecker instance. Otherwise it'll simply dispose dictionary from provider.
 
 To get suggested text for misspelled text use `getSuggestion`
 
 ```typescript
-public getSuggestion(text: string): Readonly<Array<string>>
+public getSuggestion(text: string): Promise<Readonly<Array<string>>>
 ```
 
 It'll ask currently selected spellchecker to get suggestion for misspelling.
@@ -91,16 +81,62 @@ Few other convenient interfaces are available as well.
 ```typescript
 //Returns array of key for currently loaded dictionaries
 //in desecending order of how long it has been used.
-public availableDictionaries: Readonly<Array<string>>;
+public getAvailableDictionaries: Promise<Readonly<Array<string>>>;
 
 //Returns key of currently selected dictionary.
-public selectedDictionary: string | null;
-
-//Writes bit more verbosed log. Setter only.
-public verboseLog: boolean;
+public getSelectedDictionary: Promise<string | null>;
 ```
 
-[`Example`](https://github.com/kwonoj/electron-hunspell/tree/master/example) provides simple code how to use SpellCheckerProvider in general. `npm run browserwindow` will executes example for general browserWindow, `npm run browserview` provides example for loading external page via `browserView` with preload scripts.
+## Attach provider to webFrame
+
+Once provider instance is ready, `attachSpellCheckProvider` can actually attach those into current webFrame.
+
+```typescript
+const attached = attachSpellCheckProvider(provider);
+
+//Change language for spellchecker attached to webFrame.
+await attached.switchLanguage('en');
+//Teardown webFrame's spellchecker based on current language.
+await attached.unsubscribe();
+```
+
+`attachSpellCheckProvider` relies on `provider` to get current language's dictionary. If dictionary is not loaded via `loadDictionary`, spellcheck won't work.
+
+## Put provider to another thread
+
+`attachSpellCheckProvider` not only accepts instance of `SpellCheckerProvider` but also accepts any proxy object can commnuicate to actual provider instance. Since Electron's spellchecker is now async, it is possible to place provider instnace to other than main thread like web worker.
+
+```typescript
+//pseudo code
+
+//provider.js
+const provider = new SpellCheckerProvider();
+self.onmessage = (event) => {
+  switch (type) {
+    ...
+    case 'spell':
+      postMessage('message', provider.spell(...));
+  }
+}
+
+//renderer.js
+const worker = new Worker('provider.js');
+//proxy object implements necessary interfaces to attach spellchecker
+const providerProxy = {
+  spell: (text) => {
+    worker.addEventListener('message', onSpell);
+    worker.postMessage(...);
+  },
+  ...
+};
+
+// use proxy object to attach spellchecker to webframe
+await attachSpellCheckProvider(providerProxy);
+```
+
+`attachSpellCheckProvider` does not aware where does provider placed - it can be other process communicates via IPC, or webworker, or something else and does not provide any proxy implementation by default. Also note using IPC for proxy need caution, as spellcheck can cause amount of IPC request based on user typings.
+
+[`Example`](https://github.com/kwonoj/electron-hunspell/tree/master/example) provides simple code how to use SpellCheckerProvider in general. `npm run example:browserwindow` will executes example for general browserWindow, `npm run example:browserview` provides example for loading external page via `browserView` with preload scripts. `npm run example:worker` will load example running provider under web worker.
 
 # Building / Testing
 
