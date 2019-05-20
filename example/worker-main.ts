@@ -2,7 +2,6 @@ import { app, BrowserView, BrowserWindow, Menu, MenuItem } from 'electron';
 
 let mainWindow: Electron.BrowserWindow | null = null;
 
-//wire context menu event from browserview's web contents, display suggestion if available.
 //NOTE: CONTEXT MENU CREATION IN EXAMPLE IS PURELY EXAMPLE PURPOSE ONLY, NOT A RECOMMENDED PRACTICE
 const setContextMenuEventHandler = (wnd: Electron.BrowserView | Electron.BrowserWindow) => {
   wnd.webContents.addListener('context-menu', async (_e: Electron.Event, p: any) => {
@@ -13,9 +12,7 @@ const setContextMenuEventHandler = (wnd: Electron.BrowserView | Electron.Browser
     } else if (!p.misspelledWord || p.misspelledWord.length < 1) {
       menu.append(new MenuItem({ label: 'no spelling correction suggestion' }));
     } else {
-      const code = `window.${
-        process.env.ENTRY === 'browserWindow' ? 'browserWindowProvider' : 'browserViewProvider'
-      }.getSuggestion(\`${p.misspelledWord}\`)`;
+      const code = `window.provider.getSuggestion(\`${p.misspelledWord}\`)`;
       const suggestion = await wnd!.webContents.executeJavaScript(code);
       suggestion.forEach((value: string) => {
         let item = new MenuItem({
@@ -46,31 +43,23 @@ app.on('ready', () => {
     }
   });
 
-  mainWindow.loadURL(`file://${__dirname}/${process.env.ENTRY}.html`);
+  const view = new BrowserView({
+    //nodeIntegration is enabled only for simple example. do not follow this in production.
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+      preload: require.resolve('./worker-preload')
+    }
+  });
+  mainWindow.setBrowserView(view);
 
-  if (process.env.ENTRY === 'browserWindow') {
-    setContextMenuEventHandler(mainWindow!);
-  }
+  view.setBounds({ x: 0, y: 80, width: 1024, height: 768 });
+  view.setAutoResize({ width: true, height: true });
+  view.webContents.loadURL('http://html.com/tags/textarea/#Code_Example');
 
-  //Example logic for browser view
-  if (process.env.ENTRY === 'browserView') {
-    const view = new BrowserView({
-      //nodeIntegration is enabled only for simple example. do not follow this in production.
-      webPreferences: {
-        nodeIntegration: true,
-        contextIsolation: false,
-        preload: require.resolve('./browserView-preload')
-      }
-    });
-    mainWindow.setBrowserView(view);
-    view.setBounds({ x: 0, y: 80, width: 1024, height: 768 });
-    view.setAutoResize({ width: true, height: true });
-    view.webContents.loadURL('http://html.com/tags/textarea/#Code_Example');
+  setTimeout(() => {
+    view.webContents.openDevTools();
+  }, 2000);
 
-    setTimeout(() => {
-      view.webContents.openDevTools();
-    }, 2000);
-
-    setContextMenuEventHandler(view);
-  }
+  setContextMenuEventHandler(view);
 });

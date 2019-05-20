@@ -1,10 +1,11 @@
 {
   "name": "electron-hunspell",
-  "version": "1.0.0-beta.5",
+  "version": "1.0.0-beta.7",
   "description": "Providing hunspell based spellchecker for Electron applications",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
   "types": "./dist/types/index.d.ts",
+  "sideEffects": false,
   "engines": {
     "npm": ">=3.0.0",
     "node": ">=4.2.4"
@@ -29,7 +30,11 @@
     "build": "tsc -b --verbose ./src/tsconfig.cjs.json ./src/tsconfig.esm.json ./src/tsconfig.types.json ./spec/tsconfig.json",
     "build:clean": "shx rm -rf ./dist",
     "commit": "git-cz -S",
-    "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s"
+    "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
+    "example:build": "tsc -p ./example/tsconfig.json && shx cp ./example/*.html ./example/dist/example",
+    "example:browserwindow": "npm-run-all example:build && cross-env ENTRY=browserWindow electron ./example/dist/example/main.js",
+    "example:browserview": "npm-run-all example:build && cross-env ENTRY=browserView electron ./example/dist/example/main.js",
+    "example:worker": "npm-run-all example:build && webpack --config ./example/webpack.config.js && electron ./example/dist/example/worker-main.js"
   },
   "repository": {
     "type": "git",
@@ -51,14 +56,13 @@
   "devDependencies": {
     "@commitlint/cli": "^7.6.1",
     "@commitlint/config-angular": "^7.6.0",
-    "@types/chai": "^4.1.7",
     "@types/jest": "^24.0.13",
     "@types/node": "^12.0.2",
-    "chai": "^4.2.0",
     "commitizen": "^3.1.1",
     "conventional-changelog-cli": "^2.0.21",
+    "cross-env": "^5.2.0",
     "cz-conventional-changelog": "2.1.0",
-    "electron": "^4.2.1",
+    "electron": "^5.0.1",
     "husky": "^2.3.0",
     "jest": "^24.8.0",
     "jest-spin-reporter": "^1.0.2",
@@ -67,14 +71,16 @@
     "prettier": "^1.17.1",
     "shx": "0.3.2",
     "ts-jest": "^24.0.2",
+    "ts-loader": "^6.0.1",
     "tslint": "^5.16.0",
     "tslint-no-unused-expression-chai": "^0.1.4",
-    "typescript": "^3.4.5"
+    "typescript": "^3.4.5",
+    "webpack": "^4.31.0",
+    "webpack-cli": "^3.3.2"
   },
   "dependencies": {
     "hunspell-asm": "^2.0.0",
-    "tslib": "1.9.3",
-    "unixify": "1.0.0"
+    "tslib": "1.9.3"
   },
   "husky": {
     "hooks": {

@@ -1,29 +1,17 @@
-import { expect } from 'chai';
-import { webFrame } from 'electron';
 import { loadModule } from 'hunspell-asm';
 import { SpellCheckerProvider } from '../src/spellCheckerProvider';
 
 jest.mock('hunspell-asm');
-jest.mock('electron', () => ({ webFrame: { setSpellCheckProvider: jest.fn() } }), {
-  virtual: true
-});
 
 describe('spellCheckerProvider', () => {
   beforeEach(() => jest.resetAllMocks());
-
-  it('should able to set verbose', () => {
-    const provider = new SpellCheckerProvider();
-    provider.verboseLog = true;
-
-    expect((provider as any)._verboseLog).to.be.true;
-  });
 
   describe('initialize', () => {
     it('should init factory', async () => {
       const provider = new SpellCheckerProvider();
 
       await provider.initialize();
-      expect((loadModule as jest.Mock<any>).mock.calls).to.have.lengthOf(1);
+      expect((loadModule as jest.Mock<any>).mock.calls).toHaveLength(1);
     });
 
     it('should inint factory once', async () => {
@@ -33,17 +21,17 @@ describe('spellCheckerProvider', () => {
 
       await provider.initialize();
       await provider.initialize();
-      expect(loadModuleMock.mock.calls).to.have.lengthOf(1);
+      expect(loadModuleMock.mock.calls).toHaveLength(1);
     });
   });
 
-  describe('availableDictionaries', () => {
-    it('should return empty if dictionaries are not loaded', () => {
+  describe('getAvailableDictionaries', () => {
+    it('should return empty if dictionaries are not loaded', async () => {
       const provider = new SpellCheckerProvider();
-      expect(provider.availableDictionaries).to.be.empty;
+      expect(await provider.getAvailableDictionaries()).toEqual([]);
     });
 
-    it('should return dictionaries sorted by uptime', () => {
+    it('should return dictionaries sorted by uptime', async () => {
       const provider = new SpellCheckerProvider();
       (provider as any).spellCheckerTable = {
         kr: { uptime: 100 },
@@ -51,57 +39,40 @@ describe('spellCheckerProvider', () => {
         jp: { uptime: 120 }
       };
 
-      const dict = provider.availableDictionaries;
-      expect(dict).to.deep.equal(['jp', 'kr', 'en']);
+      const dict = await provider.getAvailableDictionaries();
+      expect(dict).toEqual(['jp', 'kr', 'en']);
     });
   });
 
-  describe('selectedDictionary', () => {
-    it('should return null if not selected', () => {
+  describe('getSelectedDictionaryLanguage', () => {
+    it('should return null if not selected', async () => {
       const provider = new SpellCheckerProvider();
 
-      expect(provider.selectedDictionary).to.be.null;
+      expect(await provider.getSelectedDictionaryLanguage()).toBeNull();
     });
 
-    it('should return currently selected dictionary', () => {
+    it('should return currently selected dictionary', async () => {
       const provider = new SpellCheckerProvider();
       (provider as any)._currentSpellCheckerKey = 'kr';
 
-      expect(provider.selectedDictionary).to.equal('kr');
+      expect(await provider.getSelectedDictionaryLanguage()).toEqual('kr');
     });
   });
 
   describe('getSuggestion', () => {
-    it('should return empty without current checker key', () => {
+    it('should throw without current checker key', async () => {
       const provider = new SpellCheckerProvider();
-      const suggestion = provider.getSuggestion('boo');
-      expect(suggestion).to.be.empty;
+      expect(provider.getSuggestion('boo')).rejects.toThrow();
     });
 
-    it('should return empty without checker instance', () => {
+    it('should throw without checker instance', async () => {
       const provider = new SpellCheckerProvider();
       (provider as any)._currentSpellCheckerKey = 'kr';
 
-      const suggestion = provider.getSuggestion('boo');
-      expect(suggestion).to.be.empty;
+      expect(provider.getSuggestion('boo')).rejects.toThrow();
     });
 
-    it('should return suggestions with verbose log', () => {
-      const provider = new SpellCheckerProvider();
-      provider.verboseLog = true;
-
-      (provider as any)._currentSpellCheckerKey = 'kr';
-      (provider as any).spellCheckerTable['kr'] = {
-        spellChecker: {
-          suggest: jest.fn(() => ['boo', 'meh'])
-        }
-      };
-
-      const suggestion = provider.getSuggestion('boo');
-      expect(suggestion).to.deep.equal(['boo', 'meh']);
-    });
-
-    it('should return suggestions', () => {
+    it('should return suggestions', async () => {
       const provider = new SpellCheckerProvider();
 
       (provider as any)._currentSpellCheckerKey = 'kr';
@@ -111,24 +82,15 @@ describe('spellCheckerProvider', () => {
         }
       };
 
-      const suggestion = provider.getSuggestion('boo');
-      expect(suggestion).to.deep.equal(['boo', 'meh']);
+      const suggestion = await provider.getSuggestion('boo');
+      expect(suggestion).toEqual(['boo', 'meh']);
     });
   });
 
-  describe('loadDictionary', () => {
+  describe('loadDictionary', async () => {
     it('should throw when key is not valid', async () => {
       const provider = new SpellCheckerProvider();
-      let thrown = false;
-
-      try {
-        await provider.loadDictionary(null as any, 'a' as any, new Int32Array(1) as any);
-      } catch (e) {
-        expect(e).to.be.an('Error');
-        thrown = true;
-      }
-
-      expect(thrown).to.be.true;
+      expect(provider.loadDictionary(null as any, 'a' as any, new Int32Array(1) as any)).rejects.toThrow();
     });
 
     it('should throw when key is already registered', async () => {
@@ -148,25 +110,15 @@ describe('spellCheckerProvider', () => {
         await provider.loadDictionary('kk', new Int32Array(1), new Int32Array(1));
         await provider.loadDictionary('kk', new Int32Array(1), new Int32Array(1));
       } catch (e) {
-        expect(e).to.be.an('Error');
         thrown = true;
       }
 
-      expect(thrown).to.be.true;
+      expect(thrown).toEqual(true);
     });
 
     it('should throw when dictionary is not valid', async () => {
       const provider = new SpellCheckerProvider();
-      let thrown = false;
-
-      try {
-        await provider.loadDictionary('k', 'a' as any, new Int32Array(1) as any);
-      } catch (e) {
-        expect(e).to.be.an('Error');
-        thrown = true;
-      }
-
-      expect(thrown).to.be.true;
+      expect(provider.loadDictionary('k', 'a' as any, new Int32Array(1) as any)).rejects.toThrow();
     });
 
     it('should load buffer dictionary', async () => {
@@ -182,45 +134,18 @@ describe('spellCheckerProvider', () => {
       await provider.initialize();
 
       await provider.loadDictionary('kk', new Int32Array(1), new Int32Array(1));
-      expect(mockMountBuffer.mock.calls).to.have.lengthOf(2);
+      expect(mockMountBuffer.mock.calls).toHaveLength(2);
 
-      expect(mockCreate.mock.calls).to.have.lengthOf(1);
-      expect(mockCreate.mock.calls).to.deep.equal([['boo', 'boo']]);
+      expect(mockCreate.mock.calls).toHaveLength(1);
+      expect(mockCreate.mock.calls).toEqual([['boo', 'boo']]);
 
-      expect(provider.availableDictionaries).to.deep.equal(['kk']);
-      expect(provider.selectedDictionary).to.be.null;
-    });
-
-    it('should load file dictionary', async () => {
-      const mockMountDirectory = jest.fn(x => x);
-      const mockCreate = jest.fn();
-
-      const loadModuleMock = loadModule as jest.Mock<any>;
-      loadModuleMock.mockImplementationOnce(() => ({
-        mountDirectory: mockMountDirectory,
-        create: mockCreate
-      }));
-
-      const provider = new SpellCheckerProvider();
-      await provider.initialize();
-
-      await provider.loadDictionary('xx', '/x/a.dic', '/y/a.aff');
-      expect(mockMountDirectory.mock.calls).to.have.lengthOf(2);
-      expect(mockMountDirectory.mock.calls).to.deep.equal([['/y'], ['/x']]);
-
-      expect(mockCreate.mock.calls).to.have.lengthOf(1);
-      expect(mockCreate.mock.calls).to.deep.equal([['/y/a.aff', '/x/a.dic']]);
-
-      expect(provider.availableDictionaries).to.deep.equal(['xx']);
-      expect(provider.selectedDictionary).to.be.null;
+      expect(await provider.getAvailableDictionaries()).toEqual(['kk']);
+      expect(await provider.getSelectedDictionaryLanguage()).toBeNull();
     });
   });
 
   describe('unloadDictionary', () => {
-    it('should clear currently selected key', () => {
-      const oldType = process.type;
-      process.type = 'renderer';
-
+    it('should clear currently selected key', async () => {
       const provider = new SpellCheckerProvider();
       (provider as any)._currentSpellCheckerKey = 'kk';
       (provider as any).spellCheckerTable = {
@@ -230,25 +155,18 @@ describe('spellCheckerProvider', () => {
       };
 
       provider.unloadDictionary('kk');
-      expect((provider as any)._currentSpellCheckerKey).to.be.null;
-      expect((provider as any).currentSpellCheckerStartTime).to.equal(Number.NEGATIVE_INFINITY);
-
-      const calls = (webFrame.setSpellCheckProvider as jest.Mock<any>).mock.calls;
-      expect(calls).to.have.lengthOf(1);
-
-      expect(calls[0][2].spellCheck('boo')).to.be.true;
-
-      process.type = oldType;
+      expect((provider as any)._currentSpellCheckerKey).toBeNull();
+      expect((provider as any).currentSpellCheckerStartTime).toEqual(Number.NEGATIVE_INFINITY);
     });
 
-    it('should not throw when key is not valid', () => {
+    it('should not throw when key is not valid', async () => {
       const provider = new SpellCheckerProvider();
-      expect(() => provider.unloadDictionary(null as any)).to.not.throw();
+      expect(provider.unloadDictionary(null as any)).resolves.not.toThrow();
     });
 
-    it('should not throw when dictionary is not available', () => {
+    it('should not throw when dictionary is not available', async () => {
       const provider = new SpellCheckerProvider();
-      expect(() => provider.unloadDictionary('meh')).to.not.throw();
+      expect(provider.unloadDictionary('meh')).resolves.not.toThrow();
     });
 
     it('should destroy spellchecker instance', () => {
@@ -259,7 +177,7 @@ describe('spellCheckerProvider', () => {
       };
 
       provider.unloadDictionary('kk');
-      expect(dispose.mock.calls).to.have.lengthOf(1);
+      expect(dispose.mock.calls).toHaveLength(1);
     });
 
     it('should unmount buffer dictionary', async () => {
@@ -281,101 +199,16 @@ describe('spellCheckerProvider', () => {
 
       provider.unloadDictionary('kk');
 
-      expect(mockUnmount.mock.calls).to.have.lengthOf(2);
-      expect(mockChecker.dispose.mock.calls).to.have.lengthOf(1);
-    });
-
-    it('should unmount directory if refcount cleared', async () => {
-      const mockChecker = { dispose: jest.fn() };
-      const mockCreate = jest.fn(() => mockChecker);
-      const mockMountDirectory = jest.fn(x => x);
-      const mockUnmount = jest.fn();
-
-      const loadModuleMock = loadModule as jest.Mock<any>;
-      loadModuleMock.mockImplementationOnce(() => ({
-        mountDirectory: mockMountDirectory,
-        create: mockCreate,
-        unmount: mockUnmount
-      }));
-
-      const provider = new SpellCheckerProvider();
-      await provider.initialize();
-
-      await provider.loadDictionary('kk', '/x/a.dic', '/x/a.aff');
-
-      expect((provider as any).fileMountRefCount).to.deep.equal({ '/x': 2 });
-      provider.unloadDictionary('kk');
-
-      expect(mockUnmount.mock.calls).to.have.lengthOf(1);
-      expect((provider as any).fileMountRefCount).to.be.empty;
-    });
-
-    it('should not throw while decrease refcount for zero refs', async () => {
-      const mockChecker = { dispose: jest.fn() };
-      const mockCreate = jest.fn(() => mockChecker);
-      const mockMountDirectory = jest.fn(x => x);
-      const mockUnmount = jest.fn();
-
-      const loadModuleMock = loadModule as jest.Mock<any>;
-      loadModuleMock.mockImplementationOnce(() => ({
-        mountDirectory: mockMountDirectory,
-        create: mockCreate,
-        unmount: mockUnmount
-      }));
-
-      const provider = new SpellCheckerProvider();
-      await provider.initialize();
-
-      await provider.loadDictionary('kk', '/y/a.dic', '/x/a.aff');
-
-      expect((provider as any).fileMountRefCount).to.deep.equal({ '/x': 1, '/y': 1 });
-
-      //augment refcount to zero
-      (provider as any).fileMountRefCount['/x'] = 0;
-      provider.unloadDictionary('kk');
-
-      expect(mockUnmount.mock.calls).to.have.lengthOf(2);
-      expect((provider as any).fileMountRefCount).to.be.empty;
-    });
-
-    it('should decrease refcount file dictionary if mounted path have another dictionary', async () => {
-      const mockChecker = { dispose: jest.fn() };
-      const mockCreate = jest.fn(() => mockChecker);
-      const mockMountDirectory = jest.fn(x => x);
-      const mockUnmount = jest.fn();
-
-      const loadModuleMock = loadModule as jest.Mock<any>;
-      loadModuleMock.mockImplementationOnce(() => ({
-        mountDirectory: mockMountDirectory,
-        create: mockCreate,
-        unmount: mockUnmount
-      }));
-
-      const provider = new SpellCheckerProvider();
-      await provider.initialize();
-
-      await provider.loadDictionary('kk', '/x/a.dic', '/x/a.aff');
-      await provider.loadDictionary('xx', '/x/y.dic', '/x/y.aff');
-
-      expect((provider as any).fileMountRefCount).to.deep.equal({ '/x': 4 });
-
-      provider.unloadDictionary('kk');
-
-      expect(mockUnmount.mock.calls).to.have.lengthOf(0);
-      expect((provider as any).fileMountRefCount).to.deep.equal({ '/x': 2 });
-
-      provider.unloadDictionary('xx');
-
-      expect(mockUnmount.mock.calls).to.have.lengthOf(1);
-      expect((provider as any).fileMountRefCount).to.be.empty;
+      expect(mockUnmount.mock.calls).toHaveLength(2);
+      expect(mockChecker.dispose.mock.calls).toHaveLength(1);
     });
   });
 
   describe('switchDictionary', () => {
-    it('should throw if dictionary is not available', () => {
+    it('should throw if dictionary is not available', async () => {
       const provider = new SpellCheckerProvider();
 
-      expect(() => provider.switchDictionary('k')).to.throw();
+      expect(provider.onSwitchLanguage('k')).rejects.toThrow();
     });
 
     it('should log uptime if current dictionary exists', () => {
@@ -390,9 +223,9 @@ describe('spellCheckerProvider', () => {
       };
       Date.now = jest.fn(() => 100);
 
-      provider.switchDictionary('ll');
+      provider.onSwitchLanguage('ll');
       const uptime = (provider as any).spellCheckerTable['kk'].uptime;
-      expect(uptime).to.equal(95); //100 - 10 + 5
+      expect(uptime).toEqual(95); //100 - 10 + 5
       Date.now = _now;
     });
 
@@ -407,9 +240,9 @@ describe('spellCheckerProvider', () => {
       };
       Date.now = jest.fn(() => 100);
 
-      provider.switchDictionary('ll');
+      provider.onSwitchLanguage('ll');
       const uptime = (provider as any).spellCheckerTable['kk'].uptime;
-      expect(uptime).to.equal(5);
+      expect(uptime).toEqual(5);
       Date.now = _now;
     });
 
@@ -419,77 +252,10 @@ describe('spellCheckerProvider', () => {
         ll: {}
       };
 
-      expect((provider as any).currentSpellCheckerStartTime).to.equal(Number.NEGATIVE_INFINITY);
-      provider.switchDictionary('ll');
+      expect((provider as any).currentSpellCheckerStartTime).toEqual(Number.NEGATIVE_INFINITY);
+      provider.onSwitchLanguage('ll');
 
-      expect((provider as any).currentSpellCheckerStartTime).to.be.greaterThan(0);
-    });
-
-    it('should not throw if webframe does not exist to attach', () => {
-      const provider = new SpellCheckerProvider();
-      (provider as any).spellCheckerTable = {
-        ll: {}
-      };
-
-      expect(() => provider.switchDictionary('ll')).to.not.throw();
-    });
-
-    it('should attach into webframe', () => {
-      const oldType = process.type;
-      process.type = 'renderer';
-
-      const provider = new SpellCheckerProvider();
-      (provider as any).spellCheckerTable = {
-        ll: {
-          spellChecker: {
-            spell: jest.fn()
-          }
-        }
-      };
-
-      provider.switchDictionary('ll');
-      expect(provider.selectedDictionary).to.equal('ll');
-      const calls = (webFrame.setSpellCheckProvider as jest.Mock<any>).mock.calls;
-      expect(calls).to.have.lengthOf(1);
-      expect(calls[0][0]).to.equal('ll');
-      expect(calls[0][1]).to.equal(true);
-
-      calls[0][2].spellCheck('boo');
-      const spellMock = (provider as any).spellCheckerTable['ll'].spellChecker.spell;
-      expect(spellMock.mock.calls).to.have.lengthOf(1);
-      expect(spellMock.mock.calls[0]).to.deep.equal(['boo']);
-
-      process.type = oldType;
-    });
-
-    it('should attach into webframe with verbose log', () => {
-      const oldType = process.type;
-      process.type = 'renderer';
-
-      const provider = new SpellCheckerProvider();
-      provider.verboseLog = true;
-      (provider as any).spellCheckerTable = {
-        ll: {
-          spellChecker: {
-            spell: jest.fn()
-          }
-        }
-      };
-
-      provider.switchDictionary('ll');
-      expect(provider.selectedDictionary).to.equal('ll');
-      const calls = (webFrame.setSpellCheckProvider as jest.Mock<any>).mock.calls;
-      expect(calls).to.have.lengthOf(1);
-      expect(calls[0][0]).to.equal('ll');
-      expect(calls[0][1]).to.equal(true);
-
-      calls[0][2].spellCheck('boo');
-      const spellMock = (provider as any).spellCheckerTable['ll'].spellChecker.spell;
-      expect(spellMock.mock.calls).to.have.lengthOf(1);
-      expect(spellMock.mock.calls[0]).to.deep.equal(['boo']);
-
-      process.type = oldType;
+      expect((provider as any).currentSpellCheckerStartTime).toBeGreaterThan(0);
     });
   });
 });
-//tslint:enable:no-require-imports
