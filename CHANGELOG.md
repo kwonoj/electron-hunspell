@@ -1,3 +1,40 @@
+<a name="1.0.0-beta.7"></a>
+# [1.0.0-beta.7](https://github.com/kwonoj/electron-hunspell/compare/v1.0.0-beta.5...v1.0.0-beta.7) (2019-05-20)
+
+
+### Bug Fixes
+
+* **provider:** allow tree shake ([a567ae9](https://github.com/kwonoj/electron-hunspell/commit/a567ae9))
+
+
+### Code Refactoring
+
+* **loaddictionary:** only accept arraybuffer ([3041e2b](https://github.com/kwonoj/electron-hunspell/commit/3041e2b))
+* **unloaddictoinary:** do not reset webframe provider ([5e6dcbf](https://github.com/kwonoj/electron-hunspell/commit/5e6dcbf))
+
+
+### Features
+
+* **attachspellcheckerprovider:** implement attachprovider ([eeea886](https://github.com/kwonoj/electron-hunspell/commit/eeea886))
+* **providerproxy:** expose interfaces for attach ([88b3ed6](https://github.com/kwonoj/electron-hunspell/commit/88b3ed6))
+* **providerproxy:** no longer explicitly requires languagekey ([198f7c6](https://github.com/kwonoj/electron-hunspell/commit/198f7c6))
+* **spellcheckerprovider:** async interfaces ([6c3bf89](https://github.com/kwonoj/electron-hunspell/commit/6c3bf89))
+* **spellcheckerprovider:** implement spell ([0b72398](https://github.com/kwonoj/electron-hunspell/commit/0b72398))
+* **spellcheckerprovider:** switchdictionary do not autoattach ([b926902](https://github.com/kwonoj/electron-hunspell/commit/b926902))
+
+
+### BREAKING CHANGES
+
+* **spellcheckerprovider:** provider interface is now async
+* **providerproxy:** switchDictionary deprecated
+* **spellcheckerprovider:** spellchecker provider do not attach to
+webframe.setSpellcheckProvider
+* **unloaddictoinary:** unloadDictionary does not reset webframe spellchecker
+* **loaddictionary:** loadDictionary does not read physical file from path
+anymore
+
+
+
 <a name="1.0.0-beta.5"></a>
 # [1.0.0-beta.5](https://github.com/kwonoj/electron-hunspell/compare/v1.0.0-beta.4...v1.0.0-beta.5) (2019-01-31)
 
