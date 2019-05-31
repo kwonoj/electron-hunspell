@@ -55,7 +55,7 @@
   "homepage": "https://github.com/kwonoj/electron-hunspell#readme",
   "devDependencies": {
     "@commitlint/cli": "^8.0.0",
-    "@commitlint/config-angular": "^7.6.0",
+    "@commitlint/config-angular": "^8.0.0",
     "@types/jest": "^24.0.13",
     "@types/node": "^12.0.2",
     "commitizen": "^3.1.1",
