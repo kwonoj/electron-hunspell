@@ -1,3 +1,13 @@
+<a name="1.0.0-beta.8"></a>
+# [1.0.0-beta.8](https://github.com/kwonoj/electron-hunspell/compare/v1.0.0-beta.7...v1.0.0-beta.8) (2019-06-10)
+
+
+### Features
+
+* **export:** export environment enum ([a274423](https://github.com/kwonoj/electron-hunspell/commit/a274423))
+
+
+
 <a name="1.0.0-beta.7"></a>
 # [1.0.0-beta.7](https://github.com/kwonoj/electron-hunspell/compare/v1.0.0-beta.5...v1.0.0-beta.7) (2019-05-20)
 
