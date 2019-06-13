@@ -1,3 +1,18 @@
+<a name="1.0.0-beta.9"></a>
+# [1.0.0-beta.9](https://github.com/kwonoj/electron-hunspell/compare/v1.0.0-beta.8...v1.0.0-beta.9) (2019-06-13)
+
+
+### Features
+
+* **spellcheckerprovider:** do not accept environment override ([da8f87c](https://github.com/kwonoj/electron-hunspell/commit/da8f87c))
+
+
+### BREAKING CHANGES
+
+* **spellcheckerprovider:** do not allow environment override
+
+
+
 <a name="1.0.0-beta.8"></a>
 # [1.0.0-beta.8](https://github.com/kwonoj/electron-hunspell/compare/v1.0.0-beta.7...v1.0.0-beta.8) (2019-06-10)
 

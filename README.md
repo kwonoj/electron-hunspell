@@ -41,10 +41,7 @@ await provider.initialize();
 `initialize` accepts options to pass into `hunspell-asm` binary if needed.
 
 ```typescript
-initialize(initOptions?: Partial<{
-  timeout: number;
-  environment?: ENVIRONMENT;
-}>): Promise<void>;
+initialize(initOptions?: Partial<{ timeout: number; }>): Promise<void>;
 ```
 
 Once you have provider instance, you can manage each dictionary based on locale key.
