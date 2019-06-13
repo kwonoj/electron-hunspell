@@ -14,8 +14,7 @@
     "target": "es2018",
     "noEmit": true,
     "lib": [
-      "es5",
-      "es2015",
+      "es2018",
       "dom"
     ],
   }
