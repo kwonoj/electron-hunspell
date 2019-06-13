@@ -29,6 +29,10 @@ module.exports = [
       ]
     },
     target: 'webworker',
+    node: {
+      fs: false,
+      crypto: false
+    },
     externals: ['electron']
   }
 ];
