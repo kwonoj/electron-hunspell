@@ -1,11 +1,10 @@
-import { ENVIRONMENT } from 'hunspell-asm';
 import { enableLogger, SpellCheckerProvider } from '../src/index';
 
 enableLogger(console);
 const provider = new SpellCheckerProvider();
 
 const init = async () => {
-  await provider.initialize({ environment: ENVIRONMENT.WEB });
+  await provider.initialize();
 
   const aff = await (await fetch('https://unpkg.com/hunspell-dict-en-us@0.1.0/en-us.aff')).arrayBuffer();
   const dic = await (await fetch('https://unpkg.com/hunspell-dict-en-us@0.1.0/en-us.dic')).arrayBuffer();

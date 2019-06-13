@@ -1,5 +1,4 @@
 import * as fs from 'fs';
-import { ENVIRONMENT } from 'hunspell-asm';
 import * as path from 'path';
 import { attachSpellCheckProvider, enableLogger, SpellCheckerProvider } from '../src/index';
 
@@ -9,9 +8,7 @@ const init = async () => {
   const browserWindowProvider = new SpellCheckerProvider();
   (window as any).browserWindowProvider = browserWindowProvider;
 
-  await browserWindowProvider.initialize({
-    environment: ENVIRONMENT.NODE
-  });
+  await browserWindowProvider.initialize({});
 
   await browserWindowProvider.loadDictionary(
     'en',
