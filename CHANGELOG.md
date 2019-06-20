@@ -1,3 +1,13 @@
+<a name="1.0.0-beta.11"></a>
+# [1.0.0-beta.11](https://github.com/kwonoj/electron-hunspell/compare/v1.0.0-beta.10...v1.0.0-beta.11) (2019-06-20)
+
+
+### Bug Fixes
+
+* **hunspell:** fix runtime behavior difference due to optimization ([204ccbb](https://github.com/kwonoj/electron-hunspell/commit/204ccbb))
+
+
+
 <a name="1.0.0-beta.10"></a>
 # [1.0.0-beta.10](https://github.com/kwonoj/electron-hunspell/compare/v1.0.0-beta.9...v1.0.0-beta.10) (2019-06-13)
 
