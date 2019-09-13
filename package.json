@@ -78,7 +78,7 @@
     "webpack-cli": "^3.3.8"
   },
   "dependencies": {
-    "hunspell-asm": "^3.0.3"
+    "hunspell-asm": "^4.0.0"
   },
   "husky": {
     "hooks": {
