@@ -1,3 +1,13 @@
+<a name="1.0.0"></a>
+# [1.0.0](https://github.com/kwonoj/electron-hunspell/compare/v1.0.0-beta.12...v1.0.0) (2019-09-13)
+
+
+### Features
+
+* **hunspell:** enable optimization ([12e966a](https://github.com/kwonoj/electron-hunspell/commit/12e966a))
+
+
+
 <a name="1.0.0-beta.12"></a>
 # [1.0.0-beta.12](https://github.com/kwonoj/electron-hunspell/compare/v1.0.0-beta.11...v1.0.0-beta.12) (2019-07-19)
 
