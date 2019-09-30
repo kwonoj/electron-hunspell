@@ -87,6 +87,34 @@ describe('spellCheckerProvider', () => {
     });
   });
 
+  describe('addWord', () => {
+    it('should throw without current checker key', async () => {
+      const provider = new SpellCheckerProvider();
+      expect(provider.addWord('boo')).rejects.toThrow();
+    });
+
+    it('should throw without checker instance', async () => {
+      const provider = new SpellCheckerProvider();
+      (provider as any)._currentSpellCheckerKey = 'kr';
+
+      expect(provider.addWord('boo')).rejects.toThrow();
+    });
+
+    it('add the word', async () => {
+      const provider = new SpellCheckerProvider();
+
+      const spellChecker = {
+        addWord: jest.fn()
+      };
+
+      (provider as any)._currentSpellCheckerKey = 'kr';
+      (provider as any).spellCheckerTable['kr'] = { spellChecker };
+
+      await provider.addWord('boo');
+      expect(spellChecker.addWord).toHaveBeenCalledWith('boo');
+    });
+  });
+
   describe('loadDictionary', async () => {
     it('should throw when key is not valid', async () => {
       const provider = new SpellCheckerProvider();

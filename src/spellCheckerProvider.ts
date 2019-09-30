@@ -100,7 +100,7 @@ class SpellCheckerProvider {
 
   /**
    * Get suggestion for misspelled text.
-   * @param {string} Text text to get suggstion.
+   * @param {string} Text text to get suggestion.
    * @returns {Readonly<Array<string>>} Array of suggested values.
    */
   public async getSuggestion(text: string): Promise<Readonly<Array<string>>> {
@@ -110,6 +110,21 @@ class SpellCheckerProvider {
     }
 
     return spellChecker.suggest(text);
+  }
+
+  /**
+   * Add a word to the current dictionary.
+   * Runtime only -- added words do not persist between sessions!
+   * @param {string} text: word to be added
+   * @returns {Promise<void>} Indication to load completes.
+   */
+  public async addWord(text: string): Promise<void> {
+    const spellChecker = this.getSpellchecker();
+    if (!spellChecker) {
+      throw new Error('Not able to find spellchecker');
+    }
+
+    return spellChecker.addWord(text);
   }
 
   /**
