@@ -73,6 +73,13 @@ public getSuggestion(text: string): Promise<Readonly<Array<string>>>
 
 It'll ask currently selected spellchecker to get suggestion for misspelling.
 
+To add a word to the dictionary, use `addWord`.  This is *runtime* behavior, so it doesn't 
+persist over once instance is disposed.
+
+```typescript
+public addWord(text: string): Promise<void>
+```
+
 Few other convenient interfaces are available as well.
 
 ```typescript
