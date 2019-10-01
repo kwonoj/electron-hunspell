@@ -20,6 +20,10 @@ interface ProviderProxy {
    * Returns currently selected spellchecker dictionary language.
    */
   getSelectedDictionaryLanguage: () => Promise<string | null>;
+  /**
+   * Add a word to the current dictionary.
+   */
+  addWord: (text: string) => Promise<void>;
 }
 
 /**
