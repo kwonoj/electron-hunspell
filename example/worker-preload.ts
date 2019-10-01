@@ -53,8 +53,8 @@ const init = async () => {
         worker.postMessage({ type: 'getSuggestion', value: text });
       });
     },
-    addWord: (text: string) => {
-      return new Promise<Readonly<Array<string>>>(res => {
+    addWord: (languageKey: string, text: string) => {
+      return new Promise<Readonly<void>>(res => {
         const responseHandler = (event: MessageEvent) => {
           const { data } = event;
           if (data.type === 'addWordResponse') {
@@ -64,7 +64,7 @@ const init = async () => {
         };
 
         worker.addEventListener('addWord', responseHandler);
-        worker.postMessage({ type: 'addWord', value: text });
+        worker.postMessage({ type: 'addWord', languageKey, value: text });
       });
     },
     getSelectedDictionaryLanguage: () => {

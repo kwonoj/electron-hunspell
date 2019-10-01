@@ -118,13 +118,12 @@ class SpellCheckerProvider {
    * @param {string} text: word to be added
    * @returns {Promise<void>} Indication to load completes.
    */
-  public async addWord(text: string): Promise<void> {
-    const spellChecker = this.getSpellchecker();
-    if (!spellChecker) {
-      throw new Error('Not able to find spellchecker');
+  public async addWord(languageKey: string, text: string): Promise<void> {
+    if (!languageKey || !this.spellCheckerTable[languageKey]) {
+      throw new Error(`Spellchecker dictionary for ${languageKey} is not available, ensure dictionary loaded`);
     }
 
-    return spellChecker.addWord(text);
+    return this.spellCheckerTable[languageKey].spellChecker.addWord(text);
   }
 
   /**

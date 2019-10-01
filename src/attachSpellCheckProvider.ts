@@ -23,7 +23,7 @@ interface ProviderProxy {
   /**
    * Add a word to the current dictionary.
    */
-  addWord: (text: string) => Promise<void>;
+  addWord?: (languageKey: string, text: string) => Promise<void>;
 }
 
 /**

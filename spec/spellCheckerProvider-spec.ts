@@ -88,16 +88,11 @@ describe('spellCheckerProvider', () => {
   });
 
   describe('addWord', () => {
-    it('should throw without current checker key', async () => {
-      const provider = new SpellCheckerProvider();
-      expect(provider.addWord('boo')).rejects.toThrow();
-    });
-
     it('should throw without checker instance', async () => {
       const provider = new SpellCheckerProvider();
       (provider as any)._currentSpellCheckerKey = 'kr';
 
-      expect(provider.addWord('boo')).rejects.toThrow();
+      expect(provider.addWord('en', 'boo')).rejects.toThrow();
     });
 
     it('add the word', async () => {
@@ -110,7 +105,7 @@ describe('spellCheckerProvider', () => {
       (provider as any)._currentSpellCheckerKey = 'kr';
       (provider as any).spellCheckerTable['kr'] = { spellChecker };
 
-      await provider.addWord('boo');
+      await provider.addWord('kr', 'boo');
       expect(spellChecker.addWord).toHaveBeenCalledWith('boo');
     });
   });

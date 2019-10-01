@@ -77,7 +77,7 @@ To add a word to the dictionary, use `addWord`.  This is *runtime* behavior, so 
 persist over once instance is disposed.
 
 ```typescript
-public addWord(text: string): Promise<void>
+public addWord(languageKey: string, text: string): Promise<void>
 ```
 
 Few other convenient interfaces are available as well.

@@ -29,7 +29,7 @@ const init = async () => {
         provider.getSuggestion(data.value).then(suggestion => response(data.type, suggestion));
         break;
       case 'addWord':
-        provider.addWord(data.value).then(() => response(data.type));
+        provider.addWord(data.languageKey, data.value).then(() => response(data.type));
         break;
       case 'getSelectedDictionaryLanguage':
         provider.getSelectedDictionaryLanguage().then(dict => response(data.type, dict));

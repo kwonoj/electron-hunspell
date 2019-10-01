@@ -28,7 +28,7 @@ const setContextMenuEventHandler = (wnd: Electron.BrowserView | Electron.Browser
       menu.append(
         new MenuItem({
           label: 'Add to dictionary',
-          click: () => wnd!.webContents.executeJavaScript(`${entry}.addWord(\`${p.misspelledWord}\`)`)
+          click: () => wnd!.webContents.executeJavaScript(`${entry}.addWord('en', \`${p.misspelledWord}\`)`)
         })
       );
     }
