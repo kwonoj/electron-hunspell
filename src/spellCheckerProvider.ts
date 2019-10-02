@@ -115,6 +115,7 @@ class SpellCheckerProvider {
   /**
    * Add a word to the current dictionary.
    * Runtime only -- added words do not persist between sessions!
+   * @param {string} languageKey Locale key for spell checker instance.
    * @param {string} text: word to be added
    * @returns {Promise<void>} Indication to load completes.
    */
