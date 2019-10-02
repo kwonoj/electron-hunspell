@@ -1,3 +1,20 @@
+<a name="1.1.0"></a>
+# [1.1.0](https://github.com/kwonoj/electron-hunspell/compare/v1.0.0...v1.1.0) (2019-10-02)
+
+
+### Bug Fixes
+
+* added languageKey to `addWord` ([fb7bdc9](https://github.com/kwonoj/electron-hunspell/commit/fb7bdc9))
+* added missing `addWord` to ProviderProxy ([8e1ff19](https://github.com/kwonoj/electron-hunspell/commit/8e1ff19))
+* updated parameter comments ([e4591e1](https://github.com/kwonoj/electron-hunspell/commit/e4591e1))
+
+
+### Features
+
+* implements addWord functionality ([5934e91](https://github.com/kwonoj/electron-hunspell/commit/5934e91))
+
+
+
 <a name="1.0.0"></a>
 # [1.0.0](https://github.com/kwonoj/electron-hunspell/compare/v1.0.0-beta.12...v1.0.0) (2019-09-13)
 
