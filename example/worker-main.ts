@@ -22,6 +22,13 @@ const setContextMenuEventHandler = (wnd: Electron.BrowserView | Electron.Browser
 
         menu.append(item);
       });
+
+      menu.append(
+        new MenuItem({
+          label: 'Add to dictionary',
+          click: () => wnd!.webContents.executeJavaScript(`window.provider.addWord('en', \`${p.misspelledWord}\`)`)
+        })
+      );
     }
 
     menu.popup({ window: mainWindow! });
@@ -54,7 +61,7 @@ app.on('ready', () => {
   mainWindow.setBrowserView(view);
 
   view.setBounds({ x: 0, y: 80, width: 1024, height: 768 });
-  view.setAutoResize({ width: true, height: true });
+  view.setAutoResize({ width: true, height: true, horizontal: true, vertical: true });
   view.webContents.loadURL('http://html.com/tags/textarea/#Code_Example');
 
   setTimeout(() => {

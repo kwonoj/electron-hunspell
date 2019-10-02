@@ -13,9 +13,8 @@ const setContextMenuEventHandler = (wnd: Electron.BrowserView | Electron.Browser
     } else if (!p.misspelledWord || p.misspelledWord.length < 1) {
       menu.append(new MenuItem({ label: 'no spelling correction suggestion' }));
     } else {
-      const code = `window.${
-        process.env.ENTRY === 'browserWindow' ? 'browserWindowProvider' : 'browserViewProvider'
-      }.getSuggestion(\`${p.misspelledWord}\`)`;
+      const entry = `window.${process.env.ENTRY === 'browserWindow' ? 'browserWindowProvider' : 'browserViewProvider'}`;
+      const code = `${entry}.getSuggestion(\`${p.misspelledWord}\`)`;
       const suggestion = await wnd!.webContents.executeJavaScript(code);
       suggestion.forEach((value: string) => {
         let item = new MenuItem({
@@ -25,6 +24,13 @@ const setContextMenuEventHandler = (wnd: Electron.BrowserView | Electron.Browser
 
         menu.append(item);
       });
+
+      menu.append(
+        new MenuItem({
+          label: 'Add to dictionary',
+          click: () => wnd!.webContents.executeJavaScript(`${entry}.addWord('en', \`${p.misspelledWord}\`)`)
+        })
+      );
     }
 
     menu.popup({ window: mainWindow! });
@@ -64,7 +70,7 @@ app.on('ready', () => {
     });
     mainWindow.setBrowserView(view);
     view.setBounds({ x: 0, y: 80, width: 1024, height: 768 });
-    view.setAutoResize({ width: true, height: true });
+    view.setAutoResize({ width: true, height: true, horizontal: true, vertical: true });
     view.webContents.loadURL('http://html.com/tags/textarea/#Code_Example');
 
     setTimeout(() => {
