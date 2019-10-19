@@ -1,3 +1,13 @@
+<a name="1.1.1"></a>
+## [1.1.1](https://github.com/kwonoj/electron-hunspell/compare/v1.1.0...v1.1.1) (2019-10-19)
+
+
+### Bug Fixes
+
+* **hunspell:** normalize unicode input for spellcheck ([82c8edc](https://github.com/kwonoj/electron-hunspell/commit/82c8edc))
+
+
+
 <a name="1.1.0"></a>
 # [1.1.0](https://github.com/kwonoj/electron-hunspell/compare/v1.0.0...v1.1.0) (2019-10-02)
 
