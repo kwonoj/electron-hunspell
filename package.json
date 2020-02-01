@@ -1,6 +1,6 @@
 {
   "name": "electron-hunspell",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Providing hunspell based spellchecker for Electron applications",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
@@ -53,32 +53,32 @@
   },
   "homepage": "https://github.com/kwonoj/electron-hunspell#readme",
   "devDependencies": {
-    "@commitlint/cli": "^8.2.0",
-    "@commitlint/config-angular": "^8.2.0",
-    "@types/jest": "^24.0.19",
-    "@types/node": "^12.11.1",
+    "@commitlint/cli": "^8.3.5",
+    "@commitlint/config-angular": "^8.3.4",
+    "@types/jest": "^24.9.1",
+    "@types/node": "^12.12.26",
     "commitizen": "^4.0.3",
-    "conventional-changelog-cli": "^2.0.25",
+    "conventional-changelog-cli": "^2.0.31",
     "cross-env": "^6.0.3",
-    "cz-conventional-changelog": "^3.0.2",
-    "electron": "^6.0.12",
-    "husky": "^3.0.9",
+    "cz-conventional-changelog": "^3.1.0",
+    "electron": "^6.1.7",
+    "husky": "^3.1.0",
     "jest": "^24.9.0",
     "jest-spin-reporter": "^2.0.0",
-    "lint-staged": "^9.4.2",
+    "lint-staged": "^9.5.0",
     "npm-run-all": "4.1.5",
-    "prettier": "^1.18.2",
+    "prettier": "^1.19.1",
     "shx": "0.3.2",
-    "ts-jest": "^24.1.0",
-    "ts-loader": "^6.2.0",
-    "tslint": "^5.20.0",
+    "ts-jest": "^24.3.0",
+    "ts-loader": "^6.2.1",
+    "tslint": "^5.20.1",
     "tslint-no-unused-expression-chai": "^0.1.4",
-    "typescript": "^3.6.4",
-    "webpack": "^4.41.2",
-    "webpack-cli": "^3.3.9"
+    "typescript": "^3.7.5",
+    "webpack": "^4.41.5",
+    "webpack-cli": "^3.3.10"
   },
   "dependencies": {
-    "hunspell-asm": "^4.0.1"
+    "hunspell-asm": "^4.0.2"
   },
   "husky": {
     "hooks": {
