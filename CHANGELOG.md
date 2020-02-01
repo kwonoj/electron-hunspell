@@ -1,3 +1,13 @@
+<a name="1.1.2"></a>
+## [1.1.2](https://github.com/kwonoj/electron-hunspell/compare/v1.1.1...v1.1.2) (2020-02-01)
+
+
+### Bug Fixes
+
+* **hunspell:** do not swallow unhandled exception ([4cd0c84](https://github.com/kwonoj/electron-hunspell/commit/4cd0c84)), closes [#584](https://github.com/kwonoj/electron-hunspell/issues/584)
+
+
+
 <a name="1.1.1"></a>
 ## [1.1.1](https://github.com/kwonoj/electron-hunspell/compare/v1.1.0...v1.1.1) (2019-10-19)
 
