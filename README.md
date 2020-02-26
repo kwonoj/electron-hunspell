@@ -4,6 +4,8 @@
 [![npm](https://img.shields.io/npm/v/electron-hunspell.svg)](https://www.npmjs.com/package/electron-hunspell)
 [![node](https://img.shields.io/badge/node-=>4.0-blue.svg?style=flat)](https://www.npmjs.com/package/electron-hunspell)
 
+# Deprecated: Electron provides built in spellchecker now: https://github.com/electron/electron/pull/20897
+
 # Electron-hunspell
 
 `electron-hunspell` provides [`hunspell`](https://github.com/hunspell/hunspell) based spell checker to [`Electron`](https://electron.atom.io/) based applications with minimal, simple api. This module aims specific design goals compare to other spellchecker implementations
@@ -73,7 +75,7 @@ public getSuggestion(text: string): Promise<Readonly<Array<string>>>
 
 It'll ask currently selected spellchecker to get suggestion for misspelling.
 
-To add a word to the dictionary, use `addWord`.  This is *runtime* behavior, so it doesn't 
+To add a word to the dictionary, use `addWord`.  This is *runtime* behavior, so it doesn't
 persist over once instance is disposed.
 
 ```typescript
